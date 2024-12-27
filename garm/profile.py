@@ -59,7 +59,7 @@ class Profile(Actor):
             'attachment': [ {
                 'type': 'PropertyValue',
                 'name': 'Steam Profile',
-                'value': user_row['profile_url']
+                'value': f"<a href='{user_row['profile_url']}'>Steam Profile</a>"
             }],
             'published': user_row['created_at'],
             'alsoKnownAs': [user_row['profile_url']],

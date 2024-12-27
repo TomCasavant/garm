@@ -36,23 +36,22 @@ class APObject(BaseModel):
     cc: Union[str, List[str]] = None
     name: Optional[str] = None
     content: Optional[str] = None
-    content_map: Optional[Dict[str, str]] = None
+    content_map: Optional[dict] = Field(alias='contentMap')
     summary: Optional[str] = None
-    attributed_to: Optional[str] = None
-    in_reply_to: Optional[str] = None
+    attributed_to: Optional[str] = Field(alias='attributedTo')
+    in_reply_to: Optional[str] = Field(alias='inReplyTo')
     updated: Optional[str] = None
-    attachments: Optional[List] = None
-    tags: Optional[List[str]] = None
+    attachment: Optional[List] = None
+    tag: Optional[List[str]] = None
     url: Optional[str] = None
-    media_type: Optional[str] = None
 
     @root_validator(pre=True)
     def set_defaults(cls, values):
         values['to'] = values.get('to', [])
         values['cc'] = values.get('cc', [])
-        values['content_map'] = values.get('content_map', {})
-        values['attachments'] = values.get('attachments', [])
-        values['tags'] = values.get('tags', [])
+        values['contentMap'] = values.get('contentMap', {})
+        values['attachment'] = values.get('attachment', [])
+        values['tag'] = values.get('tag', [])
         return values
 
 
@@ -105,7 +104,7 @@ class Note(APObject):
     published: str
     attributed_to: str = Field(alias='attributedTo')
     url: str
-    user_followers: str
+    type: ObjectType = Field(default=ObjectType.Note)
 
 class BaseActor(BaseModel):
     id: str

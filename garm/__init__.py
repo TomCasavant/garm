@@ -57,4 +57,10 @@ def create_app(test_config=None):
     from . import webfinger
     app.register_blueprint(webfinger.bp)
 
+    from . import inbox
+    app.register_blueprint(inbox.bp)
+
+    from . import activity
+    app.register_blueprint(activity.bp)
+
     return app

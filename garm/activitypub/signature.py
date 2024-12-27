@@ -44,13 +44,13 @@ def create_digest(message_json):
     return digest
 
 
-def sign_and_send(message, private_key_blob, recipient_host, recipient_inbox, sender_key):
+def sign_and_send(message, private_key_blob, recipient_inbox, sender_key):
     print("SIGN AND SEND")
     message_json = json.dumps(message)
-    print("MESSAGE JSON\n\n")
+    print(f"MESSAGE JSON\n\n{message_json}")
     digest = create_digest(message_json)
     message = json.loads(message_json)
-    print("MESSAGE\n\n")
+    print(f"MESSAGE\n\n{message}")
 
     # Parse the recipient's inbox URL
     print(f"Recipient Inbox: {recipient_inbox}")
@@ -91,6 +91,7 @@ def sign_and_send(message, private_key_blob, recipient_host, recipient_inbox, se
     # Send the request
     r = requests.post(recipient_inbox, headers=headers, json=message)
 
+    print(f"Response: {r.status_code} {r.text}")
     return r
 
 

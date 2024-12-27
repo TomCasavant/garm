@@ -8,6 +8,7 @@ import uuid
 import os
 
 from garm.activitypub.signature import generate_key_pair
+from garm.steam_platform import SteamPlatform
 from steam_web_api import Steam
 
 load_dotenv()
@@ -59,9 +60,20 @@ def close_db(e=None):
 
 def init_db():
     db = get_db()
+
+    # delete the screenshot table
+    db.execute('DROP TABLE IF EXISTS screenshot')
+    db.commit()
+
+    # delete the screenshot table
+    db.execute('DROP TABLE IF EXISTS activity')
+    db.commit()
+
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
+
+    '''
     # Get Steam profile information
     key = os.getenv('STEAM_API_KEY')
     if key is None:
@@ -104,7 +116,10 @@ def init_db():
         (signature, avatar, profile_url, steam_id, created_datetime, steam_name, public_key, private_key)
     )
 
-    db.commit()
+    db.commit()'''
+    steam_platform = SteamPlatform(db)
+    steam_platform.update_db()
+
 
 
 @click.command('init-db')
