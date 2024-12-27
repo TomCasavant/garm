@@ -13,6 +13,10 @@ class ObjectType(enum.Enum):
     Note = "Note"
     Person = "Person"
 
+class AudienceType(enum.Enum):
+    Public = "https://www.w3.org/ns/activitystreams#Public"
+    Private = "https://www.w3.org/ns/activitystreams#Private"
+
 class AttachmentType(enum.Enum):
     PropertyValue = "PropertyValue" # Used for profiles
 

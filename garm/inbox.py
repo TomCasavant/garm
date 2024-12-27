@@ -84,6 +84,7 @@ def handle_follow(db, req, username):
     # Set datetime to right now
     activity_datetime = datetime.now().isoformat()
     raw_json = str(req)
+    print(foreign_actor_obj)
     db.execute(
         'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
         (foreign_activity_id, activity_type, foreign_actor_obj['ap_id'], username, activity_datetime, raw_json)
@@ -104,7 +105,7 @@ def handle_follow(db, req, username):
         '@context': 'https://www.w3.org/ns/activitystreams',
         'type': 'Accept',
         'actor': f"{base_url}/user/{actor_obj['steam_name']}",
-        'object': ap_object,
+        'object': req['id'],
         'to': [external_actor],
         'id': activity_id,
         'published': activity_datetime
