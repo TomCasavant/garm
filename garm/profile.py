@@ -97,13 +97,11 @@ def user(username):
 
     profile = Profile.from_user_row(user_row)
     model_dump = profile.model_dump(mode="json", by_alias=True)
-    # Add context             @context=['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1']
     model_dump['@context'] = ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1']
-    #return jsonify(model_dump)
-    #user = dict(user_row)
-    #if request.method == 'GET':
-    #    return redirect(user['profile_url'])
-    # set headers to 'application/activity+json'
+
+    if any(accept not in request.headers.get('Accept') for accept in ['application/activity+json', 'application/ld+json']):
+        return redirect(user_row['profile_url'])
+
     response = jsonify(model_dump)
     response.headers['Content-Type'] = 'application/activity+json'
     return response

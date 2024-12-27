@@ -112,8 +112,8 @@ class SteamPlatform(Platform):
             object_guid = guid
             activity_json = note_str
             db.execute(
-                'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json) VALUES (?, ?, ?, ?, ?)',
-                (guid, actor_guid, activity_type, object_guid, activity_json)
+                'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json, screenshot_id) VALUES (?, ?, ?, ?, ?, ?)',
+                (guid, actor_guid, activity_type, object_guid, activity_json, screenshot.get('publishedfileid'))
             )
         db.commit()
 

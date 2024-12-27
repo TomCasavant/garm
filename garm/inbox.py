@@ -92,8 +92,7 @@ def handle_follow(db, req, username):
     db.commit()
 
     accept_guid = uuid.uuid4()
-    #base_url = request.base_url.rsplit('/', 2)[0]
-    #base_url = base_url.replace('http:', 'https:')
+
     # Base URL should be just the domain
     base_url = request.base_url.rsplit('/', 3)[0]
     base_url = base_url.replace('http:', 'https:')
@@ -119,17 +118,6 @@ def handle_follow(db, req, username):
         foreign_actor_obj['inbox'],
         sender_key
     )
-
-    # DROP TABLE IF EXISTS activity;
-    # CREATE TABLE activity (
-    #     guid TEXT PRIMARY KEY,
-    #     actor_guid TEXT,
-    #     activity_type TEXT,
-    #     object_guid TEXT,
-    #     activity_json TEXT,
-    #     FOREIGN KEY(actor_guid) REFERENCES actor(steam_name,
-    #     FOREIGN KEY(object_guid) REFERENCES activity(guid)
-    # );
 
     # Store the activity in the database
     db.execute(
