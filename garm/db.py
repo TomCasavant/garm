@@ -47,17 +47,6 @@ def close_db(e=None):
 #   }
 # }
 
-#  DROP TABLE IF EXISTS actor;
-# CREATE TABLE actor (
-#     garm_id TEXT PRIMARY KEY,
-#     profile_image TEXT,
-#     profile_url TEXT,
-#     steam_id TEXT,
-#     steam_name TEXT,
-#     signature TEXT,
-#     key TEXT
-# );
-
 def load_screen_shots():
     db = get_db()
     steam_platform = SteamPlatform(db)
@@ -66,19 +55,9 @@ def load_screen_shots():
 def init_db():
     db = get_db()
 
-    # delete the screenshot table
-    db.execute('DROP TABLE IF EXISTS screenshot')
-    db.commit()
-
-    # delete the screenshot table
-    db.execute('DROP TABLE IF EXISTS activity')
-    db.commit()
-
     with current_app.open_resource('schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
-
-    '''
     # Get Steam profile information
     key = os.getenv('STEAM_API_KEY')
     if key is None:
@@ -94,38 +73,20 @@ def init_db():
     steam_name = profile['personaname']
 
     # 'timecreated': 1326745574
-    # Convert this to ActivityPub datetime format
     unix_time = profile['timecreated']
     # Convert unix time to datetime
-    #created_datetime = datetime.fromtimestamp(unix_time).strftime('%Y-%m-%dT%H:%M:%S%z')
-    # Actually we need it in "2023-12-15T00:00:00Z" format
     created_datetime = datetime.fromtimestamp(unix_time).strftime('%Y-%m-%dT%H:%M:%SZ')
     signature = str(uuid.uuid4())
 
     private_key, public_key = generate_key_pair()
 
     # Insert Steam profile information into database
-    # DROP TABLE IF EXISTS actor;
-    # CREATE TABLE actor (
-    #     garm_id TEXT PRIMARY KEY,
-    #     profile_image TEXT,
-    #     profile_url TEXT,
-    #     steam_id TEXT,
-    #     created_at TEXT,
-    #     steam_name TEXT,
-    #     public_key TEXT,
-    #     private_key TEXT
-    # );
     db.execute(
         'INSERT INTO actor (garm_id, profile_image, profile_url, steam_id, created_at, steam_name, public_key, private_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         (signature, avatar, profile_url, steam_id, created_datetime, steam_name, public_key, private_key)
     )
 
-    db.commit()'''
-    steam_platform = SteamPlatform(db)
-    steam_platform.update_db()
-
-
+    db.commit()
 
 @click.command('init-db')
 def init_db_command():

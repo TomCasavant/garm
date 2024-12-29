@@ -40,7 +40,8 @@ CREATE TABLE activity (
     activity_type TEXT,
     object_guid TEXT,
     activity_json TEXT,
-    FOREIGN KEY(actor_guid) REFERENCES actor(steam_name),
+    screenshot_id TEXT,
+    FOREIGN KEY(actor_guid) REFERENCES actor(garm_id),
     FOREIGN KEY(object_guid) REFERENCES activity(guid)
 );
 

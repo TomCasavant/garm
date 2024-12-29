@@ -40,7 +40,7 @@ class Profile(Actor):
         })
 
         actor = Actor.model_validate({
-            'id': base_url + f"/user/{user_row['steam_name']}",
+            'id': base_url + f"/user/{user_row['garm_id']}",
             'inbox': f"{base_url}/user/{user_row['steam_name']}/inbox",
             'outbox': f"{base_url}/user/{user_row['steam_name']}/outbox",
             'type': 'Person',
@@ -67,21 +67,6 @@ class Profile(Actor):
         })
         return actor
 
-
-#@bp.route('/user/<username>', methods=['GET'])
-#def user(username):
-#    db = get_db()
-#    user_row = db.execute(
-#        'SELECT * FROM actor WHERE steam_name = ?',
-#        (username,)
-#    ).fetchone()
-
-#    if user_row is None:
-#        return jsonify({'error': 'User not found'}), 404
-
-#    user = dict(user_row)
-#    return jsonify(user)
-
 # if GET then redirect to steam profile
 # if POST then show json of user
 @bp.route('/user/<username>', methods=['GET', 'POST'])
@@ -93,6 +78,16 @@ def user(username):
     ).fetchone()
 
     if user_row is None:
+        # Check if matches /users/${garm_id}
+        user_row = db.execute(
+            'SELECT * FROM actor WHERE garm_id = ?',
+            (username,)
+        ).fetchone()
+
+        # redirect if found
+        if user_row is not None:
+            return redirect(f"/user/{user_row['steam_name']}")
+
         return jsonify({'error': 'User not found'}), 404
 
     profile = Profile.from_user_row(user_row)
