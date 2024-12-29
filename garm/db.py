@@ -58,6 +58,11 @@ def close_db(e=None):
 #     key TEXT
 # );
 
+def load_screen_shots():
+    db = get_db()
+    steam_platform = SteamPlatform(db)
+    steam_platform.load_all_screenshots()
+
 def init_db():
     db = get_db()
 
@@ -127,6 +132,12 @@ def init_db_command():
     init_db()
     click.echo('Initialized the database.')
 
+@click.command('load-screenshots')
+def load_screenshots_command():
+    load_screen_shots()
+    click.echo('Loaded screenshots.')
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
+    app.cli.add_command(load_screenshots_command)
