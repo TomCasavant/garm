@@ -103,3 +103,12 @@ CREATE TABLE screenshot (
     ban_text_check_result TEXT,
     raw_activity TEXT
 );
+
+-- Followers Table, should store a list of users (that reference foreign_actor), followed by the guid of the actor they are following
+DROP TABLE IF EXISTS followers;
+CREATE TABLE followers (
+    follower_id TEXT,
+    following_id TEXT,
+    FOREIGN KEY(follower_id) REFERENCES foreign_actor(ap_id),
+    FOREIGN KEY(following_id) REFERENCES actor(garm_id)
+);

@@ -23,26 +23,6 @@ def handle_follow(db, req, username):
         print("Actor not found")
         return "Actor not found", 404
 
-    # DROP TABLE IF EXISTS foreign_actor;
-    # CREATE TABLE foreign_actor (
-    #     ap_id TEXT PRIMARY KEY,
-    #     name TEXT,
-    #     preferred_username TEXT,
-    #     inbox TEXT,
-    #     public_key TEXT
-    # );
-    #
-    # DROP TABLE IF EXISTS foreign_activity;
-    # CREATE TABLE foreign_activity (
-    #     activity_id TEXT PRIMARY KEY,
-    #     activity_type TEXT,
-    #     foreign_actor_id TEXT,
-    #     subject_actor_guid TEXT,
-    #     datetime_created TEXT,
-    #     raw_activity TEXT,
-    #     FOREIGN KEY(foreign_actor_id) REFERENCES foreign_actor(ap_id)
-    # );
-
     # Check if foreign_actor is already in followers table
     print("Checking if foreign actor is already in database")
     ap_object = req['object']
@@ -123,6 +103,22 @@ def handle_follow(db, req, username):
     db.execute(
         'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json) VALUES (?, ?, ?, ?, ?)',
         (str(accept_guid), actor_obj['steam_name'], 'Accept', foreign_activity_id, str(accept))
+    )
+    db.commit()
+
+    # -- Followers Table, should store a list of users (that reference foreign_actor), followed by the guid of the actor they are following
+    # DROP TABLE IF EXISTS followers;
+    # CREATE TABLE followers (
+    #     follower_id TEXT,
+    #     following_id TEXT,
+    #     FOREIGN KEY(follower_id) REFERENCES foreign_actor(ap_id),
+    #     FOREIGN KEY(following_id) REFERENCES actor(garm_id)
+    # );
+    # TODO: Check if successful?
+    # Store the follow activity in the followers table
+    db.execute(
+        'INSERT INTO followers (follower_id, following_id) VALUES (?, ?)',
+        (foreign_actor_obj['ap_id'], actor_obj['garm_id'])
     )
     db.commit()
 
