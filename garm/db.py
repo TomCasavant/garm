@@ -27,26 +27,6 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-# {
-#   "player": {
-#     "steamid": "76561198995017863",
-#     "communityvisibilitystate": 3,
-#     "profilestate": 1,
-#     "personaname": "The12thChairman",
-#     "profileurl": "https://steamcommunity.com/id/the12thchairman/",
-#     "avatar": "https://avatars.akamai.steamstatic.com/427ef7d5f8ad7b21678f69bc8afc95786cf38fe6.jpg",
-#     "avatarmedium": "https://avatars.akamai.steamstatic.com/427ef7d5f8ad7b21678f69bc8afc95786cf38fe6_medium.jpg",
-#     "avatarfull": "https://avatars.akamai.steamstatic.com/427ef7d5f8ad7b21678f69bc8afc95786cf38fe6_full.jpg",
-#     "avatarhash": "427ef7d5f8ad7b21678f69bc8afc95786cf38fe6",
-#     "lastlogoff": 1659923870,
-#     "personastate": 1,
-#     "primaryclanid": "103582791429521408",
-#     "timecreated": 1570311509,
-#     "personastateflags": 0,
-#     "loccountrycode": "US"
-#   }
-# }
-
 def load_screen_shots():
     db = get_db()
     steam_platform = SteamPlatform(db)

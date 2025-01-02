@@ -45,7 +45,6 @@ def post_screenshot():
         'SELECT * FROM activity WHERE screenshot_id = ? AND activity_type = ?', (unposted_screenshot['steam_id'], 'Note')
     ).fetchone()
 
-    print(f"Sending activity {unposted_screenshot}")
     send_activity(unposted_activity, db)
 
 # Every 15 minutes check if there are new screenshots
@@ -55,26 +54,26 @@ def check_for_new_screenshots():
     db = get_db()
     api_key = os.getenv('STEAM_API_KEY')
     steam_platform = SteamPlatform(db)
-    screenshots = steam_platform.get_screenshots()
+    screenshots = steam_platform.get_screenshots()['response']['publishedfiledetails']
     # Check if the first screenshot is in the database
     newest_screenshot = screenshots[0]
     screenshot_id = newest_screenshot['publishedfileid']
-    screenshot = db.execute(
+    screenshot_db = db.execute(
         'SELECT * FROM screenshot WHERE steam_id = ?', (screenshot_id,)
     ).fetchone()
     actor = db.execute(
         'SELECT * FROM actor WHERE steam_id = ?', (os.getenv('STEAM_ID'),)
     ).fetchone()
-    if screenshot is not None:
+    if screenshot_db is not None:
         return
 
     # Otherwise, loop through the screenshots until we find one that is in the database
     for screenshot in screenshots:
         screenshot_id = screenshot['publishedfileid']
-        screenshot = db.execute(
+        screenshot_search = db.execute(
             'SELECT * FROM screenshot WHERE steam_id = ?', (screenshot_id,)
         ).fetchone()
-        if screenshot is not None:
+        if screenshot_search is not None:
             break
 
         # Add the screenshot to the database

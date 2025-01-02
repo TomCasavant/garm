@@ -11,9 +11,6 @@ bp = Blueprint('inbox', __name__, url_prefix='/user/<username>/inbox')
 
 
 def handle_follow(db, req, username):
-    print("Received follow activity")
-    print("Request: ", req)
-    print("Actor: ", req['actor'])
     actor_obj = db.execute(
         'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?',
         (username,username)
@@ -23,8 +20,6 @@ def handle_follow(db, req, username):
         print("Actor not found")
         return "Actor not found", 404
 
-    # Check if foreign_actor is already in followers table
-    print("Checking if foreign actor is already in database")
     ap_object = req['object']
     activity_type = req['type']
     external_actor = req['actor']
@@ -110,14 +105,6 @@ def handle_follow(db, req, username):
     )
     db.commit()
 
-    # -- Followers Table, should store a list of users (that reference foreign_actor), followed by the guid of the actor they are following
-    # DROP TABLE IF EXISTS followers;
-    # CREATE TABLE followers (
-    #     follower_id TEXT,
-    #     following_id TEXT,
-    #     FOREIGN KEY(follower_id) REFERENCES foreign_actor(ap_id),
-    #     FOREIGN KEY(following_id) REFERENCES actor(garm_id)
-    # );
     # TODO: Check if successful?
     # Store the follow activity in the followers table
     db.execute(
@@ -162,6 +149,13 @@ def inbox(username):
             print("Unknown activity type")
             print("External Actor:", external_actor)
             print("AP Object:", ap_object)
+            # Insert raw activity into database with type and raw_json
+            db.execute(
+                'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
+                (None, None, None, None, activity_type, str(request.json))
+            )
+            db.commit()
+            print("Added unknown activity to database")
 
     if response is not None:
         return response, 202

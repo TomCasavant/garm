@@ -47,7 +47,7 @@ class Profile(Actor):
             'type': 'Person',
             'name': user_row['name'],
             'preferredUsername': user_row['steam_name'],
-            'summary': "Summary test",
+            'summary': f"Demo user for Untitled Gaming Social. Publishes screenshots from Steam to the fediverse",
             'discoverable': True,
             'publicKey': public_key,
             'icon': {

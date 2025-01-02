@@ -22,7 +22,7 @@ class SteamPlatform(Platform):
         screenshots_file_type = 4
         num_per_page = 250
         steam_id = os.getenv('STEAM_ID') #TODO: Can we get this from the Steam API?
-        screenshots = self.steam.apps.get_user_files(steam_id, screenshots_file_type, num_per_page)
+        screenshots = self.steam.apps.get_user_files(steam_id, screenshots_file_type, num_per_page, 1)
         return screenshots
 
     def load_all_screenshots(self):
