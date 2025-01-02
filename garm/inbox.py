@@ -145,14 +145,28 @@ def inbox(username):
             print("Undo activity")
             print("External Actor:", external_actor)
             print("AP Object:", ap_object)
+            # Undo activity
+            if ap_object['type'] == 'Follow':
+                db.execute(
+                    'DELETE FROM followers WHERE follower_id = ? AND following_id = ?',
+                    (external_actor, actor_obj['ugs_id'])
+                )
+                db.commit()
+            else:
+                # Unkonwn undo activity
+                # Add to table with type Undo
+                db.execute(
+                    'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
+                    (None, 'Undo', None, None, None, str(request.json))
+                )
+                db.commit()
         case _:
             print("Unknown activity type")
             print("External Actor:", external_actor)
             print("AP Object:", ap_object)
-            # Insert raw activity into database with type and raw_json
             db.execute(
                 'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
-                (None, None, None, None, activity_type, str(request.json))
+                (None, activity_type, None, None, None, str(request.json))
             )
             db.commit()
             print("Added unknown activity to database")
