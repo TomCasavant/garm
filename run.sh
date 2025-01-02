@@ -20,4 +20,4 @@ gnome-terminal -- bash -c "celery -A make_celery flower --port=5555; exec bash"
 
 echo "All services started!"
 
-flask --app garm run --debug
+flask --app ugs run --debug

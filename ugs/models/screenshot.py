@@ -4,7 +4,7 @@ An AP Note object with an attachment that represents a screenshot.
 import uuid
 from typing import Tuple
 
-from garm.activitypub.models.activity import Note, AudienceType
+from ugs.activitypub.models.activity import Note, AudienceType
 from datetime import datetime
 import os
 from slugify import slugify

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, make_response
-from garm.db import get_db
+from ugs.db import get_db
 bp = Blueprint('base', __name__, url_prefix='/')
 
 @bp.route('/', methods=['GET'])

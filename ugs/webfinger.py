@@ -2,7 +2,7 @@ import os
 
 from flask import Blueprint, request, jsonify, make_response
 
-from garm.db import get_db
+from ugs.db import get_db
 
 bp = Blueprint('webfinger', __name__, url_prefix='/.well-known/webfinger')
 

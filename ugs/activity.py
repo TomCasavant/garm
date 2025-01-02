@@ -4,10 +4,10 @@ from datetime import datetime
 
 from flask import Blueprint, request, jsonify, make_response, redirect
 
-from garm.activitypub.models.activity import AudienceType
-from garm.activitypub.signature import sign_and_send
-from garm.db import get_db
-from garm.steam_platform import STEAM_FILEPATH
+from ugs.activitypub.models.activity import AudienceType
+from ugs.activitypub.signature import sign_and_send
+from ugs.db import get_db
+from ugs.steam_platform import STEAM_FILEPATH
 
 bp = Blueprint('activities', __name__, url_prefix='/activities')
 base_url = os.getenv('BASE_URL')

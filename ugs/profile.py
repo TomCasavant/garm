@@ -4,7 +4,7 @@ from typing import Dict
 from flask import Blueprint, jsonify, request, redirect
 from pydantic import BaseModel
 
-from garm.db import get_db
+from ugs.db import get_db
 from .activitypub.models.activity import Actor, PublicKey
 
 bp = Blueprint('user', __name__, url_prefix='/')

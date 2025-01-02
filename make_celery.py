@@ -1,11 +1,11 @@
 import logging
 import os
 
-from garm import create_app
-from garm.activity import send_activity
-from garm.db import get_db
-from garm.models.screenshot import SteamScreenshot
-from garm.steam_platform import SteamPlatform
+from ugs import create_app
+from ugs.activity import send_activity
+from ugs.db import get_db
+from ugs.models.screenshot import SteamScreenshot
+from ugs.steam_platform import SteamPlatform
 
 flask_app = create_app()
 celery_app = flask_app.extensions['celery']

@@ -7,8 +7,8 @@ import sqlite3
 import uuid
 import os
 
-from garm.activitypub.signature import generate_key_pair
-from garm.steam_platform import SteamPlatform
+from ugs.activitypub.signature import generate_key_pair
+from ugs.steam_platform import SteamPlatform
 from steam_web_api import Steam
 
 load_dotenv()

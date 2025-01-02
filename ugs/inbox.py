@@ -4,8 +4,8 @@ from datetime import datetime
 import requests
 from flask import Blueprint, request, jsonify, make_response
 
-from garm.activitypub.signature import sign_and_send
-from garm.db import get_db
+from ugs.activitypub.signature import sign_and_send
+from ugs.db import get_db
 
 bp = Blueprint('inbox', __name__, url_prefix='/user/<username>/inbox')
 
