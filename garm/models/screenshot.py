@@ -7,6 +7,7 @@ from typing import Tuple
 from garm.activitypub.models.activity import Note, AudienceType
 from datetime import datetime
 import os
+from slugify import slugify
 
 base_url = os.getenv('BASE_URL')
 
@@ -60,6 +61,7 @@ class SteamScreenshot(ScreenshotNote):
         guid = cls.generate_guid()
         _id = cls.generate_id(guid)
         published = cls.format_published_date(screenshot_row['time_created'])
+        sanitized_game_name = slugify(screenshot_row['app_name'], separator='', lowercase=False)
 
         screenshot_note = Note.model_validate({
             'id': _id,
@@ -81,7 +83,21 @@ class SteamScreenshot(ScreenshotNote):
             }],
             'url': _id,
             'actor': base_url + f"/user/{actor_id}",
-            'tag': []
+            'tag': [ {
+                'type': 'Hashtag',
+                'href': f"{base_url}/tags/{sanitized_game_name}",
+                'name': f"#{screenshot_row['app_name']}"
+            },
+            {
+                'type': 'Hashtag',
+                'href': f"{base_url}/tags/gaming",
+                'name': "#gaming"
+            },
+            {
+                'type': 'Hashtag',
+                'href': f"{base_url}/tags/{sanitized_game_name}",
+                'name': f"#{sanitized_game_name}"
+            }],
         })
 
         return guid, screenshot_note

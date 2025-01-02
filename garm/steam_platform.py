@@ -69,7 +69,7 @@ class SteamPlatform(Platform):
                 self.db.execute(
                     'INSERT INTO screenshot (steam_id, ugs_user, creator, creator_appid, consumer_appid, consumer_shortcutid, filename, file_size, preview_file_size, file_url, preview_url, url, hcontent_file, hcontent_preview, title, short_description, time_created, time_updated, visibility, flags, workshop_file, workshop_accepted, show_subscribe_all, num_comments_developer, num_comments_public, banned, ban_reason, banner, can_be_deleted, app_name, file_type, can_subscribe, subscriptions, favorited, followers, lifetime_subscriptions, lifetime_favorited, lifetime_followers, lifetime_playtime, lifetime_playtime_sessions, views, image_width, image_height, image_url, num_children, num_reports, score, votes_up, votes_down, language, maybe_inappropriate_sex, maybe_inappropriate_violence, revision_change_number, revision, ban_text_check_result, raw_activity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     (
-                        screenshot.get('steam_id'),
+                        screenshot.get('publishedfileid'),
                         user['ugs_id'],
                         screenshot.get('creator'),
                         screenshot.get('creator_appid'),

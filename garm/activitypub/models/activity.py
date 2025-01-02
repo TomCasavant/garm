@@ -46,7 +46,7 @@ class APObject(BaseModel):
     in_reply_to: Optional[str] = Field(alias='inReplyTo')
     updated: Optional[str] = None
     attachment: Optional[List] = None
-    tag: Optional[List[str]] = None
+    tag: Optional[List[dict]] = None
     url: Optional[str] = None
 
     @root_validator(pre=True)

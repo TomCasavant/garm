@@ -19,9 +19,18 @@ def webfinger():
     if not resource.startswith('acct:'):
         return jsonify({'error': 'Invalid resource format'}), 400
 
-    username, domain = resource[5:].split('@')
+    #print(resource[5:].split('@'))
+    #username, domain = resource[5:].split('@')
 
-    domain = domain.strip()
+    domain = os.getenv('BASE_URL').replace('https://', '')
+    if resource[5:].count('@') == 2:
+        username = resource[5:].split('@')[1]
+    else:
+        username = resource[5:].split('@')[0]
+
+    print(f"Searching for {username} in domain {domain}")
+
+    #domain = domain.strip()
 
     db = get_db()
     # DROP TABLE IF EXISTS actor;

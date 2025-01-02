@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 from flask import Blueprint, jsonify, request, redirect
@@ -98,5 +99,34 @@ def user(username):
         return redirect(user_row['profile_url'])
 
     response = jsonify(model_dump)
+    response.headers['Content-Type'] = 'application/activity+json'
+    return response
+
+@bp.route('/user/<username>/followers', methods=['GET'])
+def followers(username):
+    db = get_db()
+    user_row = db.execute(
+        'SELECT * FROM actor WHERE steam_name = ? or ugs_id = ?',
+        (username, username)
+    ).fetchone()
+
+    if user_row is None:
+        return jsonify({'error': 'User not found'}), 404
+
+    base_url = os.getenv('BASE_URL')
+    followers = db.execute(
+        'SELECT * FROM followers WHERE following_id = ?',
+        (user_row['ugs_id'],)
+    ).fetchall()
+
+    response = {
+        '@context': 'https://www.w3.org/ns/activitystreams',
+        'id': f"{base_url}/user/{username}/followers",
+        'type': 'OrderedCollection',
+        'totalItems': len(followers),
+        'first': f"{base_url}/user/{username}/followers?page=1"
+    }
+
+    response = jsonify(response)
     response.headers['Content-Type'] = 'application/activity+json'
     return response

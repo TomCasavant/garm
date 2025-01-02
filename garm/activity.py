@@ -151,9 +151,10 @@ def send_activity(activity, db):
 
         # Add the activity to the database
         db.execute(
-            'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json) VALUES (?, ?, ?, ?, ?)',
-            (f"{activity_id}-create", actor_obj['steam_name'], 'Create', activity_id, str(create_activity))
+            'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json, screenshot_id) VALUES (?, ?, ?, ?, ?, ?)',
+            (f"{activity_id}-create", actor_obj['ugs_id'], 'Create', activity_id, str(create_activity), activity['screenshot_id'])
         )
+        db.commit()
 
         sign_and_send(
             create_activity,
