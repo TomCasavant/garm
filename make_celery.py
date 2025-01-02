@@ -4,6 +4,8 @@ import os
 from garm import create_app
 from garm.activity import send_activity
 from garm.db import get_db
+from garm.models.screenshot import SteamScreenshot
+from garm.steam_platform import SteamPlatform
 
 flask_app = create_app()
 celery_app = flask_app.extensions['celery']
@@ -39,11 +41,6 @@ def post_screenshot():
     if unposted_screenshot is None:
         return
 
-    # Get the activity associated with the screenshot
-    #unposted_activity = db.execute(
-    #    'SELECT * FROM activity WHERE screenshot_id = ?', (unposted_screenshot['steam_id'])
-    #).fetchone()
-
     unposted_activity = db.execute(
         'SELECT * FROM activity WHERE screenshot_id = ? AND activity_type = ?', (unposted_screenshot['steam_id'], 'Note')
     ).fetchone()
@@ -51,8 +48,50 @@ def post_screenshot():
     print(f"Sending activity {unposted_screenshot}")
     send_activity(unposted_activity, db)
 
+# Every 15 minutes check if there are new screenshots
+@celery_app.task
+def check_for_new_screenshots():
+    # Get the 10 newest screenshots
+    db = get_db()
+    api_key = os.getenv('STEAM_API_KEY')
+    steam_platform = SteamPlatform(db)
+    screenshots = steam_platform.get_screenshots()
+    # Check if the first screenshot is in the database
+    newest_screenshot = screenshots[0]
+    screenshot_id = newest_screenshot['publishedfileid']
+    screenshot = db.execute(
+        'SELECT * FROM screenshot WHERE steam_id = ?', (screenshot_id,)
+    ).fetchone()
+    actor = db.execute(
+        'SELECT * FROM actor WHERE steam_id = ?', (os.getenv('STEAM_ID'),)
+    ).fetchone()
+    if screenshot is not None:
+        return
+
+    # Otherwise, loop through the screenshots until we find one that is in the database
+    for screenshot in screenshots:
+        screenshot_id = screenshot['publishedfileid']
+        screenshot = db.execute(
+            'SELECT * FROM screenshot WHERE steam_id = ?', (screenshot_id,)
+        ).fetchone()
+        if screenshot is not None:
+            break
+
+        # Add the screenshot to the database
+        steam_platform.add_screenshot(screenshot, actor['ugs_id'])
+
+        # Get the newly created activity
+        # TODO: Can we just return the created activity? So we don't search the database as much
+        activity = db.execute(
+            'SELECT * FROM activity WHERE screenshot_id = ? AND activity_type = ?', (screenshot_id, 'Note')
+        ).fetchone()
+
+        # Send the activity to all followers
+        send_activity(activity, db)
+
 
 # scheudle task for every 10 minutes, share screenshot with followers
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(1*60, post_screenshot.s(), name='Post screenshots every 10 minutes')
+    sender.add_periodic_task(45*60, post_screenshot.s(), name='Post screenshots every 10 minutes')
+    sender.add_periodic_task(10*60, check_for_new_screenshots.s(), name='Check for new screenshots every 10 minutes')
