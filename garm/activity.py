@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 
@@ -6,10 +7,10 @@ from flask import Blueprint, request, jsonify, make_response, redirect
 from garm.activitypub.models.activity import AudienceType
 from garm.activitypub.signature import sign_and_send
 from garm.db import get_db
-from garm.models.screenshot import base_url
 from garm.steam_platform import STEAM_FILEPATH
 
 bp = Blueprint('activities', __name__, url_prefix='/activities')
+base_url = os.getenv('BASE_URL')
 
 @bp.route('/<path:activity_id>', methods=['GET', 'POST'])
 def get_activity(activity_id):
@@ -83,18 +84,22 @@ def send_activity(activity, db):
         'SELECT * FROM activity WHERE guid = ?', (f"{activity['guid']}-create",)
     ).fetchone()
 
+    print(f"Activity Exists: {create_activity}")
+
     # Sends the activity to the followers of the actor
     actor_obj = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ?',
-        (activity['actor_guid'],)
+        'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?',
+        (activity['actor_guid'], activity['actor_guid'])
     ).fetchone()
+
+    print(f"Actor: {actor_obj}")
 
     if actor_obj is None:
         return None
 
     followers = db.execute(
         'SELECT * FROM followers WHERE following_id = ?',
-        (actor_obj['garm_id'],)
+        (actor_obj['ugs_id'],)
     ).fetchall()
 
     for follower in followers:
@@ -131,13 +136,12 @@ def send_activity(activity, db):
 
         # Get the json of the activity
         activity_json = activity['activity_json']
-        # Convert the json string to a dictionary
         activity_json = eval(activity_json)
 
         create_activity = {
             '@context': 'https://www.w3.org/ns/activitystreams',
             'type': 'Create',
-            'actor': f"{base_url}/user/{actor_obj['steam_name']}",
+            'actor': f"{base_url}/user/{actor_obj['ugs_id']}",
             'object': activity_json,
             'to': [AudienceType.Public.value],
             'cc': [foreign_actor_obj['ap_id']],

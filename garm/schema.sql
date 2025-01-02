@@ -1,8 +1,9 @@
 DROP TABLE IF EXISTS actor;
 CREATE TABLE actor (
-    garm_id TEXT PRIMARY KEY,
+    ugs_id TEXT PRIMARY KEY,
     profile_image TEXT,
     profile_url TEXT,
+    name TEXT,
     steam_id TEXT,
     created_at TEXT,
     steam_name TEXT,
@@ -41,13 +42,14 @@ CREATE TABLE activity (
     object_guid TEXT,
     activity_json TEXT,
     screenshot_id TEXT,
-    FOREIGN KEY(actor_guid) REFERENCES actor(garm_id),
+    FOREIGN KEY(actor_guid) REFERENCES actor(ugs_id),
     FOREIGN KEY(object_guid) REFERENCES activity(guid)
 );
 
 DROP TABLE IF EXISTS screenshot;
 CREATE TABLE screenshot (
     steam_id TEXT PRIMARY KEY,
+    ugs_user TEXT,
     creator TEXT,
     creator_appid TEXT,
     consumer_appid TEXT,
@@ -110,5 +112,5 @@ CREATE TABLE followers (
     follower_id TEXT,
     following_id TEXT,
     FOREIGN KEY(follower_id) REFERENCES foreign_actor(ap_id),
-    FOREIGN KEY(following_id) REFERENCES actor(garm_id)
+    FOREIGN KEY(following_id) REFERENCES actor(ugs_id)
 );

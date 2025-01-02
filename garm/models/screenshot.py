@@ -6,8 +6,9 @@ from typing import Tuple
 
 from garm.activitypub.models.activity import Note, AudienceType
 from datetime import datetime
+import os
 
-base_url = 'https://1f1b-2603-6010-c606-5f37-00-17ee.ngrok-free.app'
+base_url = os.getenv('BASE_URL')
 
 class ScreenshotNote(Note):
     """
@@ -15,7 +16,7 @@ class ScreenshotNote(Note):
     """
 
     @classmethod
-    def from_screenshot_row(cls, screenshot_row: dict) -> Tuple[str, "ScreenshotNote"]:
+    def from_screenshot_row(cls, screenshot_row: dict, actor_id: str) -> Tuple[str, "ScreenshotNote"]:
         """
         Create a basic Screenshot instance from a database row.
         This should be overridden by subclasses for specific implementations.
@@ -52,7 +53,7 @@ class SteamScreenshot(ScreenshotNote):
     """
 
     @classmethod
-    def from_screenshot_row(cls, screenshot_row: dict) -> Tuple[str, "ScreenshotNote"]:
+    def from_screenshot_row(cls, screenshot_row: dict, actor_id: str) -> Tuple[str, "ScreenshotNote"]:
         """
         Use this method to create a ScreenshotNote instance from the database row.
         """
@@ -66,9 +67,9 @@ class SteamScreenshot(ScreenshotNote):
             'summary': None,
             'inReplyTo': None,
             'published': published,
-            'attributedTo': base_url + f"/user/MrPresidentTom",
+            'attributedTo': base_url + f"/user/{actor_id}",
             'to': [AudienceType.Public],
-            'cc': base_url + f"/user/MrPresidentTom/followers",
+            'cc': base_url + f"/user/{actor_id}/followers",
             'sensitive': False,
             'content': screenshot_row['app_name'],
             'contentMap': {'en': ""},
@@ -79,7 +80,7 @@ class SteamScreenshot(ScreenshotNote):
                 'name': f"Screenshot of {screenshot_row['app_name']}"
             }],
             'url': _id,
-            'actor': base_url + f"/user/MrPresidentTom",
+            'actor': base_url + f"/user/{actor_id}",
             'tag': []
         })
 

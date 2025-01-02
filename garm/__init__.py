@@ -20,14 +20,15 @@ def create_app(test_config=None):
     logging.basicConfig(level=logging.INFO)
 
     app = Flask(__name__, instance_relative_config=True)
+    secret_key = os.getenv('SECRET_KEY')
     app.config.from_mapping(
         CELERY=dict(
             broker_url='redis://localhost',
             result_backend='redis://localhost',
             task_ignore_result=True
         ),
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'ohgo.sqlite'),
+        SECRET_KEY=secret_key,
+        DATABASE=os.path.join(app.instance_path, 'ugs.sqlite'),
     )
     celery_init_app(app)
 

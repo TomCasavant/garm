@@ -40,11 +40,11 @@ class Profile(Actor):
         })
 
         actor = Actor.model_validate({
-            'id': base_url + f"/user/{user_row['garm_id']}",
-            'inbox': f"{base_url}/user/{user_row['steam_name']}/inbox",
-            'outbox': f"{base_url}/user/{user_row['steam_name']}/outbox",
+            'id': base_url + f"/user/{user_row['ugs_id']}",
+            'inbox': f"{base_url}/user/{user_row['ugs_id']}/inbox",
+            'outbox': f"{base_url}/user/{user_row['ugs_id']}/outbox",
             'type': 'Person',
-            'name': user_row['steam_name'],
+            'name': user_row['name'],
             'preferredUsername': user_row['steam_name'],
             'summary': "Summary test",
             'discoverable': True,
@@ -78,9 +78,9 @@ def user(username):
     ).fetchone()
 
     if user_row is None:
-        # Check if matches /users/${garm_id}
+        # Check if matches /users/${ugs_id}
         user_row = db.execute(
-            'SELECT * FROM actor WHERE garm_id = ?',
+            'SELECT * FROM actor WHERE ugs_id = ?',
             (username,)
         ).fetchone()
 

@@ -18,7 +18,7 @@ print(os.environ)
 
 def get_db():
     if 'db' not in g:
-        g.db = sqlite3.connect('garm.db')
+        g.db = sqlite3.connect('ugs.db')
         g.db.row_factory = sqlite3.Row
     return g.db
 
@@ -71,6 +71,7 @@ def init_db():
     avatar = profile['avatarfull']
     profile_url = profile['profileurl']
     steam_name = profile['personaname']
+    name = os.getenv('NAME')
 
     # 'timecreated': 1326745574
     unix_time = profile['timecreated']
@@ -82,8 +83,8 @@ def init_db():
 
     # Insert Steam profile information into database
     db.execute(
-        'INSERT INTO actor (garm_id, profile_image, profile_url, steam_id, created_at, steam_name, public_key, private_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        (signature, avatar, profile_url, steam_id, created_datetime, steam_name, public_key, private_key)
+        'INSERT INTO actor (ugs_id, name, profile_image, profile_url, steam_id, created_at, steam_name, public_key, private_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (signature, name, avatar, profile_url, steam_id, created_datetime, steam_name, public_key, private_key)
     )
 
     db.commit()
@@ -98,7 +99,24 @@ def load_screenshots_command():
     load_screen_shots()
     click.echo('Loaded screenshots.')
 
+@click.command('clear-screenshots')
+def clear_screenshots_command():
+    db = get_db()
+    db.execute('DELETE FROM screenshot')
+    db.commit()
+    click.echo('Cleared screenshots.')
+
+@click.command('clear-activities')
+def clear_activities_command():
+    # ONLY USE FOR TESTING, WILL DELETE ALL ACTIVITIES
+    db = get_db()
+    db.execute('DELETE FROM activity')
+    db.commit()
+    click.echo('Cleared activities.')
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
     app.cli.add_command(load_screenshots_command)
+    app.cli.add_command(clear_screenshots_command)
+    app.cli.add_command(clear_activities_command)

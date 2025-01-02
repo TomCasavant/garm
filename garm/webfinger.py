@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, request, jsonify, make_response
 
 from garm.db import get_db
@@ -24,7 +26,7 @@ def webfinger():
     db = get_db()
     # DROP TABLE IF EXISTS actor;
     # CREATE TABLE actor (
-    #     garm_id TEXT PRIMARY KEY,
+    #     ugs_id TEXT PRIMARY KEY,
     #     profile_image TEXT,
     #     profile_url TEXT,
     #     steam_id TEXT,
@@ -33,21 +35,24 @@ def webfinger():
     #     public_key TEXT,
     #     private_key TEXT
     # );
+    #obj = db.execute(
+    #    f'SELECT * FROM actor WHERE steam_name = ?', (username,)).fetchone()
+    # Username could be steam_name or ugs_id
     obj = db.execute(
-        f'SELECT * FROM actor WHERE steam_name = ?', (username,)).fetchone()
+        f'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?', (username, username)).fetchone()
 
     if obj is None:
         return jsonify({'error': 'User not found'}), 404
-    base_url = request.base_url.rsplit('/', 2)[0]
-    # replace with https
-    base_url = base_url.replace('http:', 'https:')
+
+    base_url = os.getenv('BASE_URL')
+
     response = {
         'subject': f"acct:{username}@{domain}",
-        'aliases': [f"{base_url}/user/{username}"],
+        'aliases': [f"{base_url}/user/{obj['ugs_id']}"],
         'links': [ {
             'rel': 'self',
             'type': 'application/activity+json',
-            'href': f"{base_url}/user/{username}"
+            'href': f"{base_url}/user/{obj['ugs_id']}"
         }]
     }
 

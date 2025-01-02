@@ -15,8 +15,8 @@ def handle_follow(db, req, username):
     print("Request: ", req)
     print("Actor: ", req['actor'])
     actor_obj = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ?',
-        (username,)
+        'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?',
+        (username,username)
     ).fetchone()
 
     if actor_obj is None:
@@ -48,14 +48,18 @@ def handle_follow(db, req, username):
              foreign_actor_obj['inbox'], foreign_actor_obj['publicKey']['publicKeyPem'])
         )
         db.commit()
-    else:
-        foreign_actor_obj = {
-            'ap_id': foreign_actor_obj['ap_id'],
-            'name': foreign_actor_obj['name'],
-            'preferred_username': foreign_actor_obj['preferred_username'],
-            'inbox': foreign_actor_obj['inbox'],
-            'public_key': foreign_actor_obj['public_key']
-        }
+        foreign_actor_obj = db.execute(
+            'SELECT * FROM foreign_actor WHERE ap_id = ?',
+            (external_actor,)
+        ).fetchone()
+
+    foreign_actor_obj = {
+        'ap_id': foreign_actor_obj['ap_id'],
+        'name': foreign_actor_obj['name'],
+        'preferred_username': foreign_actor_obj['preferred_username'],
+        'inbox': foreign_actor_obj['inbox'],
+        'public_key': foreign_actor_obj['public_key']
+    }
 
     print("Foreign actor object: ", foreign_actor_obj)
     #TODO: Validate public key
@@ -69,7 +73,7 @@ def handle_follow(db, req, username):
         'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
         (foreign_activity_id, activity_type, foreign_actor_obj['ap_id'], username, activity_datetime, raw_json)
     )
-    db.commit()
+    #db.commit()
 
     accept_guid = uuid.uuid4()
 
@@ -83,7 +87,7 @@ def handle_follow(db, req, username):
     accept = {
         '@context': 'https://www.w3.org/ns/activitystreams',
         'type': 'Accept',
-        'actor': f"{base_url}/user/{actor_obj['steam_name']}",
+        'actor': f"{base_url}/user/{actor_obj['ugs_id']}",
         'object': req['id'],
         'to': [external_actor],
         'id': activity_id,
@@ -118,7 +122,7 @@ def handle_follow(db, req, username):
     # Store the follow activity in the followers table
     db.execute(
         'INSERT INTO followers (follower_id, following_id) VALUES (?, ?)',
-        (foreign_actor_obj['ap_id'], actor_obj['garm_id'])
+        (foreign_actor_obj['ap_id'], actor_obj['ugs_id'])
     )
     db.commit()
 
@@ -131,8 +135,8 @@ def inbox(username):
     # Handles AP requests to the inbox
     db = get_db()
     actor_obj = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ?',
-        (username,)
+        'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?',
+        (username,username)
     ).fetchone()
 
     if actor_obj is None:
