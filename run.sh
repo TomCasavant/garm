@@ -1,3 +1,4 @@
+#!/bin/bash
 source .venv/bin/activate
 source .env
 
@@ -10,14 +11,15 @@ redis-server &
 sleep 3
 
 echo "Starting Celery worker..."
-gnome-terminal -- bash -c "celery -A make_celery worker --loglevel INFO; exec bash"
+celery -A make_celery worker --loglevel INFO &
 
 echo "Starting Celery beat..."
-gnome-terminal -- bash -c "celery -A make_celery beat --loglevel DEBUG; exec bash"
+celery -A make_celery beat --loglevel DEBUG &
 
-echo "Starting Flower..."
-gnome-terminal -- bash -c "celery -A make_celery flower --port=5555; exec bash"
+#echo "Starting Flower..."
+#celery -A make_celery flower --port=5555 &
 
 echo "All services started!"
 
-flask --app ugs run --debug
+# Use Gunicorn to serve the Flask application
+gunicorn -w 4 -b 0.0.0.0:8000 "ugs:create_app()" --log-level debug
