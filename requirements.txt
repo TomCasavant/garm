@@ -28,6 +28,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-slugify==8.0.4
 python-steam-api @ git+https://github.com/TomCasavant/python-steam-api@45c69dfecf1a98592419b0d2728b1806c3f77e40
+redis==5.2.1
 requests==2.32.3
 six==1.17.0
 slugify==0.0.1
