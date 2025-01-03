@@ -92,5 +92,5 @@ def check_for_new_screenshots():
 # scheudle task for every 10 minutes, share screenshot with followers
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(45*60, post_screenshot.s(), name='Post screenshots every 10 minutes')
+    sender.add_periodic_task(45*60, post_screenshot.s(), name='Post screenshots every 45 minutes')
     sender.add_periodic_task(10*60, check_for_new_screenshots.s(), name='Check for new screenshots every 10 minutes')
