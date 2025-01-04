@@ -65,6 +65,7 @@ def webfinger():
         }]
     }
     response = jsonify(response)
-    response.headers['Content-Type'] = 'application/json'
+    response.headers['Content-Type'] = 'application/jrd+json'
+    response.headers['Access-Control-Allow-Origin'] = "*"
 
     return response
