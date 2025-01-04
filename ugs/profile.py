@@ -33,7 +33,7 @@ class Profile(Actor):
         # Get base URL from current webpage
         base_url = request.base_url.rsplit('/', 2)[0]
         base_url = base_url.replace('http:', 'https:')
-        url = f"{base_url}/user/{user_row['steam_name']}"
+        url = f"{base_url}/user/{user_row['ugs_id']}"
         public_key = PublicKey.model_validate({
             'id': url + '#main-key',
             'owner': url,
@@ -61,7 +61,13 @@ class Profile(Actor):
                 'type': 'PropertyValue',
                 'name': 'Steam Profile',
                 'value': f"<a href='{user_row['profile_url']}'>Steam Profile</a>"
-            }],
+            },
+            {
+                'type': 'PropertyValue',
+                'name': 'Source Code',
+                'value': "<a href='https://github.com/TomCasavant/ugs'>https://github.com/TomCasavant/ugs</a>"
+            }
+            ],
             'published': user_row['created_at'],
             'alsoKnownAs': [user_row['profile_url']],
             'attributionDomains': [user_row['profile_url']]
@@ -74,20 +80,20 @@ class Profile(Actor):
 def user(username):
     db = get_db()
     user_row = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ?',
+        'SELECT * FROM actor WHERE ugs_id = ?',
         (username,)
     ).fetchone()
 
     if user_row is None:
         # Check if matches /users/${ugs_id}
         user_row = db.execute(
-            'SELECT * FROM actor WHERE ugs_id = ?',
+            'SELECT * FROM actor WHERE steam_name = ?',
             (username,)
         ).fetchone()
 
         # redirect if found
         if user_row is not None:
-            return redirect(f"/user/{user_row['steam_name']}")
+            return redirect(f"/user/{user_row['ugs_id']}")
 
         return jsonify({'error': 'User not found'}), 404
 
@@ -95,7 +101,8 @@ def user(username):
     model_dump = profile.model_dump(mode="json", by_alias=True)
     model_dump['@context'] = ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1']
 
-    if any(accept not in request.headers.get('Accept') for accept in ['application/activity+json', 'application/ld+json']):
+    if not any(accept in request.headers.get('Accept', '') for accept in ['application/activity+json', 'application/ld+json']):
+        print(request.headers.get('Accept'))
         return redirect(user_row['profile_url'])
 
     response = jsonify(model_dump)

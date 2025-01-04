@@ -50,10 +50,13 @@ def get_activity(activity_id):
         return "Activity not found", 404
 
     if request.method == 'GET':
-        if any(accept not in request.headers.get('Accept') for accept in ['application/activity+json', 'application/ld+json']):
-            screenshot_id = activity['screenshot_id']
-            if screenshot_id:
-                return redirect(STEAM_FILEPATH.format(screenshot_id))
+        try:
+            if not any(accept in request.headers.get('Accept', '') for accept in ['application/activity+json', 'application/ld+json']):
+                screenshot_id = activity.get('screenshot_id')
+                if screenshot_id:
+                    return redirect(STEAM_FILEPATH.format(screenshot_id))
+        except Exception as e:
+            print(f"Error: {e} - Accept headers not included?")
 
         json_str = activity['activity_json']
         activity_dict = eval(json_str)
@@ -66,16 +69,6 @@ def get_activity(activity_id):
     if request.method == 'POST':
         return make_response('', 202)
 
-
-@bp.route('/<path:activity_id>/created', methods=['GET'])
-def generate_activity(activity_id):
-    # calls send_activity
-    db = get_db()
-    activity = db.execute(
-        'SELECT * FROM activity WHERE guid = ?', (activity_id,)
-    ).fetchone()
-    send_activity(activity, db)
-    return make_response("Activity sent", 200)
 
 def send_activity(activity, db):
 

@@ -64,5 +64,7 @@ def webfinger():
             'href': f"{base_url}/user/{obj['ugs_id']}"
         }]
     }
+    response = jsonify(response)
+    response.headers['Content-Type'] = 'application/json'
 
-    return jsonify(response)
+    return response
