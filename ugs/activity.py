@@ -50,9 +50,12 @@ def get_activity(activity_id):
         return "Activity not found", 404
 
     if request.method == 'GET':
+        print(request.headers)
         try:
             if not any(accept in request.headers.get('Accept', '') for accept in ['application/activity+json', 'application/ld+json']):
-                screenshot_id = activity.get('screenshot_id')
+                print("Redirecting to Steam")
+                screenshot_id = activity['screenshot_id']
+                print(f"Screenshot ID: {screenshot_id}")
                 if screenshot_id:
                     return redirect(STEAM_FILEPATH.format(screenshot_id))
         except Exception as e:
