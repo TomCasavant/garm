@@ -5,14 +5,18 @@ bp = Blueprint('base', __name__, url_prefix='/')
 @bp.route('/', methods=['GET'])
 def base():
     db = get_db()
+    page = request.args.get('page', default=1, type = int)
+    offset = page * 10 - 10
     # Return a page with the 10 most recent screenshots
     screenshots = db.execute(
-        'SELECT * FROM screenshot ORDER BY time_created DESC LIMIT 10'
+        f"SELECT * FROM screenshot ORDER BY time_created DESC LIMIT 10 OFFSET {offset}"
     ).fetchall()
 
     html = "<h1>Recent Screenshots</h1>"
     for screenshot in screenshots:
+        activity = db.execute('SELECT * FROM activity WHERE screenshot_id = ? AND activity_type = ?', (screenshot['steam_id'], 'Note')).fetchone()
         html += f"<h2>{screenshot['app_name']}</h2>"
+        html += f"<p><a href=\'https://ugs.tomkahe.com/activities/{activity['guid']}\'>https://ugs.tomkahe.com/activities/{activity['guid']}</a></p>"
         html += f"<img src='{screenshot['image_url']}' alt='{screenshot['app_name']}'><br>"
 
     return make_response(html, 200)
