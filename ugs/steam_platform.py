@@ -10,6 +10,8 @@ import os
 #TODO: Move to separate class
 
 STEAM_FILEPATH = "https://steamcommunity.com/sharedfiles/filedetails/?id={}"
+base_url = os.getenv('BASE_URL')
+base_url = base_url.strip('/')
 
 # Implements get_achievements and get_screenshots for Steam
 class SteamPlatform(Platform):
@@ -167,8 +169,8 @@ class SteamPlatform(Platform):
                     if existing_activity_json[key] != new_activity_json[key]:
                         print(f"Activity for screenshot ID: {existing_screenshot.steam_id} has been updated")
                         # copy old url and id into note_str
-                        note['url'] = existing_activity_json['url']
-                        note['id'] = existing_activity_json['id']
+                        note.url = base_url + f"/activities/{existing_activity.guid}"
+                        note.id = base_url + f"/activities/{existing_activity.guid}"
                         note_dump = note.model_dump(mode="json", by_alias=True)
                         note_str = str(note_dump)
                         existing_activity.activity_json = note_str
