@@ -5,17 +5,17 @@ import requests
 from flask import Blueprint, request, jsonify, make_response
 
 from ugs.activitypub.signature import sign_and_send
-from ugs.db import get_db
+from ugs.models.db import db
+from ugs.models.actor import Actor
+from ugs.models.follower import Follower
+from ugs.models.foreign_activity import ForeignActivity
+from ugs.models.foreign_actor import ForeignActor
 
 bp = Blueprint('inbox', __name__, url_prefix='/user/<username>/inbox')
 
 
-def handle_follow(db, req, username):
-    actor_obj = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?',
-        (username,username)
-    ).fetchone()
-
+def handle_follow(req, username):
+    actor_obj = Actor.query.filter_by(steam_name=username).first()
     if actor_obj is None:
         print("Actor not found")
         return "Actor not found", 404
@@ -25,11 +25,7 @@ def handle_follow(db, req, username):
     external_actor = req['actor']
     foreign_activity_id = req['id']
 
-    foreign_actor_obj = db.execute(
-        'SELECT * FROM foreign_actor WHERE ap_id = ?',
-        (external_actor,)
-    ).fetchone()
-
+    foreign_actor_obj = ForeignActor.query.filter_by(ap_id=external_actor).first()
     # Store foreign actor if not already in database
     if foreign_actor_obj is None:
         print("Fetching foreign actor")
@@ -37,23 +33,25 @@ def handle_follow(db, req, username):
         if actor_request.status_code != 200:
             return "Failed to fetch foreign actor", 400
         foreign_actor_obj = actor_request.json()
-        db.execute(
-            'INSERT INTO foreign_actor (ap_id, name, preferred_username, inbox, public_key) VALUES (?, ?, ?, ?, ?)',
-            (foreign_actor_obj['id'], foreign_actor_obj['name'], foreign_actor_obj['preferredUsername'],
-             foreign_actor_obj['inbox'], foreign_actor_obj['publicKey']['publicKeyPem'])
+
+        # Store the foreign actor in the database
+        new_actor = ForeignActor(
+            ap_id=foreign_actor_obj['id'],
+            name=foreign_actor_obj['name'],
+            preferred_username=foreign_actor_obj['preferredUsername'],
+            inbox=foreign_actor_obj['inbox'],
+            public_key=foreign_actor_obj['publicKey']['publicKeyPem']
         )
-        db.commit()
-        foreign_actor_obj = db.execute(
-            'SELECT * FROM foreign_actor WHERE ap_id = ?',
-            (external_actor,)
-        ).fetchone()
+        db.session.add(new_actor)
+        db.session.commit()
+        foreign_actor_obj = ForeignActor.query.filter_by(ap_id=external_actor).first()
 
     foreign_actor_obj = {
-        'ap_id': foreign_actor_obj['ap_id'],
-        'name': foreign_actor_obj['name'],
-        'preferred_username': foreign_actor_obj['preferred_username'],
-        'inbox': foreign_actor_obj['inbox'],
-        'public_key': foreign_actor_obj['public_key']
+        'ap_id': foreign_actor_obj.ap_id,
+        'name': foreign_actor_obj.name,
+        'preferred_username': foreign_actor_obj.preferred_username,
+        'inbox': foreign_actor_obj.inbox,
+        'public_key': foreign_actor_obj.public_key
     }
 
     print("Foreign actor object: ", foreign_actor_obj)
@@ -64,11 +62,16 @@ def handle_follow(db, req, username):
     activity_datetime = datetime.now().isoformat()
     raw_json = str(req)
     print(foreign_actor_obj)
-    db.execute(
-        'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
-        (foreign_activity_id, activity_type, foreign_actor_obj['ap_id'], username, activity_datetime, raw_json)
+    new_activity = ForeignActivity(
+        activity_id=foreign_activity_id,
+        activity_type=activity_type,
+        foreign_actor_id=foreign_actor_obj['ap_id'],
+        subject_actor_guid=username,
+        datetime_created=activity_datetime,
+        raw_activity=raw_json
     )
-    #db.commit()
+    db.session.add(new_activity)
+    db.session.commit()
 
     accept_guid = uuid.uuid4()
 
@@ -82,7 +85,7 @@ def handle_follow(db, req, username):
     accept = {
         '@context': 'https://www.w3.org/ns/activitystreams',
         'type': 'Accept',
-        'actor': f"{base_url}/user/{actor_obj['ugs_id']}",
+        'actor': f"{base_url}/user/{actor_obj.ugs_id}",
         'object': req['id'],
         'to': [external_actor],
         'id': activity_id,
@@ -93,25 +96,30 @@ def handle_follow(db, req, username):
     # sign and Send the message
     sign_and_send(
         accept,
-        actor_obj['private_key'],
+        actor_obj.private_key,
         foreign_actor_obj['inbox'],
         sender_key
     )
 
     # Store the activity in the database
-    db.execute(
-        'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json) VALUES (?, ?, ?, ?, ?)',
-        (str(accept_guid), actor_obj['steam_name'], 'Accept', foreign_activity_id, str(accept))
+    new_activity = ForeignActivity(
+        activity_id=str(accept_guid),
+        actor_guid=actor_obj.ugs_id,
+        activity_type='Accept',
+        object_guid=foreign_activity_id,
+        activity_json=str(accept)
     )
-    db.commit()
+    db.session.add(new_activity)
+    db.session.commit()
 
     # TODO: Check if successful?
     # Store the follow activity in the followers table
-    db.execute(
-        'INSERT INTO followers (follower_id, following_id) VALUES (?, ?)',
-        (foreign_actor_obj['ap_id'], actor_obj['ugs_id'])
+    new_follower = Follower(
+        follower_id=foreign_actor_obj['ap_id'],
+        following_id=actor_obj.ugs_id
     )
-    db.commit()
+    db.session.add(new_follower)
+    db.session.commit()
 
     return make_response("Follow activity processed", 200)
 
@@ -120,11 +128,7 @@ def handle_follow(db, req, username):
 def inbox(username):
     print(f"Received request for {username}'s inbox")
     # Handles AP requests to the inbox
-    db = get_db()
-    actor_obj = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?',
-        (username,username)
-    ).fetchone()
+    actor_obj = Actor.query.filter_by(steam_name=username).first()
 
     if actor_obj is None:
         return "Actor not found", 404
@@ -140,35 +144,43 @@ def inbox(username):
     response = None
     match activity_type:
         case 'Follow':
-            response = handle_follow(db, request.json, username)
+            response = handle_follow(request.json, username)
         case 'Undo':
             print("Undo activity")
             print("External Actor:", external_actor)
             print("AP Object:", ap_object)
             # Undo activity
             if ap_object['type'] == 'Follow':
-                db.execute(
-                    'DELETE FROM followers WHERE follower_id = ? AND following_id = ?',
-                    (external_actor, actor_obj['ugs_id'])
-                )
-                db.commit()
+                follower = Follower.query.filter_by(follower_id=external_actor, following_id=actor_obj['ugs_id']).first()
+                db.session.delete(follower)
+                db.session.commit()
             else:
-                # Unkonwn undo activity
+                # Unknown undo activity
                 # Add to table with type Undo
-                db.execute(
-                    'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
-                    (None, 'Undo', None, None, None, str(request.json))
+                new_activity = ForeignActivity(
+                    activity_id=None,
+                    activity_type='Undo',
+                    foreign_actor_id=None,
+                    subject_actor_guid=None,
+                    datetime_created=None,
+                    raw_activity=str(request.json)
                 )
-                db.commit()
+                db.session.add(new_activity)
+                db.session.commit()
         case _:
             print("Unknown activity type")
             print("External Actor:", external_actor)
             print("AP Object:", ap_object)
-            db.execute(
-                'INSERT INTO foreign_activity (activity_id, activity_type, foreign_actor_id, subject_actor_guid, datetime_created, raw_activity) VALUES (?, ?, ?, ?, ?, ?)',
-                (None, activity_type, None, None, None, str(request.json))
+            new_activity = ForeignActivity(
+                activity_id=None,
+                activity_type=activity_type,
+                foreign_actor_id=None,
+                subject_actor_guid=None,
+                datetime_created=None,
+                raw_activity=str(request.json)
             )
-            db.commit()
+            db.session.add(new_activity)
+            db.session.commit()
             print("Added unknown activity to database")
 
     if response is not None:

@@ -3,6 +3,17 @@ import os
 
 from celery import Celery, Task
 from flask import Flask
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
+from ugs.models.db import db
+# import all classes from ugs.models
+from ugs.models.actor import Actor
+from ugs.models.activity import Activity
+from ugs.models.foreign_activity import ForeignActivity
+from ugs.models.foreign_actor import ForeignActor
+from ugs.models.follower import Follower
+from ugs.models.screenshot import Screenshot
 
 def celery_init_app(app: Flask) -> Celery:
     class FlaskTask(Task):
@@ -19,18 +30,35 @@ def celery_init_app(app: Flask) -> Celery:
 def create_app(test_config=None):
     logging.basicConfig(level=logging.INFO)
 
-    app = Flask(__name__, instance_relative_config=True)
-    secret_key = os.getenv('SECRET_KEY')
+    #app = Flask(__name__, instance_relative_config=True)
+    #secret_key = os.getenv('SECRET_KEY')
+    #app.config.from_mapping(
+    #    CELERY=dict(
+    #        broker_url='redis://localhost',
+    #        result_backend='redis://localhost',
+    #        task_ignore_result=True
+    #    ),
+    #    SECRET_KEY=secret_key,
+    #    DATABASE=os.path.join(app.instance_path, 'ugs.sqlite'),
+    #)
+    #celery_init_app(app)
+
+    # use sqlalchemy for database and create app
+    app = Flask(__name__)
     app.config.from_mapping(
-        CELERY=dict(
+        CELERY = dict(
             broker_url='redis://localhost',
             result_backend='redis://localhost',
             task_ignore_result=True
         ),
-        SECRET_KEY=secret_key,
-        DATABASE=os.path.join(app.instance_path, 'ugs.sqlite'),
+        SECRET_KEY=os.getenv('SECRET_KEY'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'ugs.sqlite'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
-    celery_init_app(app)
+
+    db.init_app(app)
+    from ugs.models.db import init_app
+    init_app(app)
 
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
@@ -46,8 +74,8 @@ def create_app(test_config=None):
     def hello():
         return 'Hello, World!'
 
-    from . import db
-    db.init_app(app)
+    #from . import db
+
 
     from . import base_route
     app.register_blueprint(base_route.bp)
