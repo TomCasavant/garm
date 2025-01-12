@@ -4,8 +4,11 @@ from typing import Dict
 from flask import Blueprint, jsonify, request, redirect
 from pydantic import BaseModel
 
-from ugs.db import get_db
+from ugs.models.db import db
+from ugs.models.actor import Actor as UGSActor
 from .activitypub.models.activity import Actor, PublicKey
+from .models.follower import Follower
+from .models.screenshot import Screenshot
 
 bp = Blueprint('user', __name__, url_prefix='/')
 
@@ -23,7 +26,7 @@ class Profile(Actor):
     discoverable: bool
 
     @classmethod
-    def from_user_row(cls, user_row: dict) -> "Profile":
+    def from_user_row(cls, user_row: Actor) -> "Profile":
         # Use this method to create a Profile instance from the database row
         #public_key = PublicKey(
         #    id=user_row['steam_id'],
@@ -33,34 +36,34 @@ class Profile(Actor):
         # Get base URL from current webpage
         base_url = request.base_url.rsplit('/', 2)[0]
         base_url = base_url.replace('http:', 'https:')
-        url = f"{base_url}/user/{user_row['ugs_id']}"
+        url = f"{base_url}/user/{user_row.ugs_id}"
         public_key = PublicKey.model_validate({
             'id': url + '#main-key',
             'owner': url,
-            'publicKeyPem': user_row['public_key'].decode('utf-8')
+            'publicKeyPem': user_row.public_key.decode('utf-8')
         })
 
         actor = Actor.model_validate({
-            'id': base_url + f"/user/{user_row['ugs_id']}",
-            'inbox': f"{base_url}/user/{user_row['ugs_id']}/inbox",
-            'outbox': f"{base_url}/user/{user_row['ugs_id']}/outbox",
+            'id': base_url + f"/user/{user_row.ugs_id}",
+            'inbox': f"{base_url}/user/{user_row.ugs_id}/inbox",
+            'outbox': f"{base_url}/user/{user_row.ugs_id}/outbox",
             'type': 'Person',
-            'name': user_row['name'],
-            'preferredUsername': user_row['steam_name'],
+            'name': user_row.name,
+            'preferredUsername': user_row.steam_name,
             'summary': f"Demo user for Untitled Gaming Social. Publishes screenshots from Steam to the fediverse",
             'discoverable': True,
             'publicKey': public_key,
             'icon': {
                 'type': 'Image',
                 'mediaType': 'image/jpeg',
-                'url': user_row['profile_image']
+                'url': user_row.profile_image
             },
-            'url': f"{base_url}/user/{user_row['steam_name']}",
+            'url': f"{base_url}/user/{user_row.steam_name}",
             'manuallyApprovesFollowers': False,
             'attachment': [ {
                 'type': 'PropertyValue',
                 'name': 'Steam Profile',
-                'value': f"<a href='{user_row['profile_url']}'>Steam Profile</a>"
+                'value': f"<a href='{user_row.profile_url}'>Steam Profile</a>"
             },
             {
                 'type': 'PropertyValue',
@@ -68,9 +71,9 @@ class Profile(Actor):
                 'value': "<a href='https://github.com/TomCasavant/ugs'>https://github.com/TomCasavant/ugs</a>"
             }
             ],
-            'published': user_row['created_at'],
-            'alsoKnownAs': [user_row['profile_url']],
-            'attributionDomains': [user_row['profile_url']]
+            'published': user_row.created_at,
+            'alsoKnownAs': [user_row.profile_url],
+            'attributionDomains': [user_row.profile_url]
         })
         return actor
 
@@ -78,22 +81,17 @@ class Profile(Actor):
 # if POST then show json of user
 @bp.route('/user/<username>', methods=['GET', 'POST'])
 def user(username):
-    db = get_db()
-    user_row = db.execute(
-        'SELECT * FROM actor WHERE ugs_id = ?',
-        (username,)
-    ).fetchone()
+    print(db.session)
+    # get first screenshot in table
+    user_row = UGSActor.query.filter_by(ugs_id=username).first()
 
     if user_row is None:
         # Check if matches /users/${ugs_id}
-        user_row = db.execute(
-            'SELECT * FROM actor WHERE steam_name = ?',
-            (username,)
-        ).fetchone()
+        user_row = UGSActor.query.filter_by(steam_name=username).first()
 
         # redirect if found
         if user_row is not None:
-            return redirect(f"/user/{user_row['ugs_id']}")
+            return redirect(f"/user/{user_row.ugs_id}")
 
         return jsonify({'error': 'User not found'}), 404
 
@@ -103,7 +101,7 @@ def user(username):
 
     if not any(accept in request.headers.get('Accept', '') for accept in ['application/activity+json', 'application/ld+json']):
         print(request.headers.get('Accept'))
-        return redirect(user_row['profile_url'])
+        return redirect(user_row.profile_url)
 
     response = jsonify(model_dump)
     response.headers['Content-Type'] = 'application/activity+json'
@@ -111,26 +109,19 @@ def user(username):
 
 @bp.route('/user/<username>/followers', methods=['GET'])
 def followers(username):
-    db = get_db()
-    user_row = db.execute(
-        'SELECT * FROM actor WHERE steam_name = ? or ugs_id = ?',
-        (username, username)
-    ).fetchone()
+    user_row = Actor.query.filter_by(steam_name=username).first()
 
     if user_row is None:
         return jsonify({'error': 'User not found'}), 404
 
     base_url = os.getenv('BASE_URL')
-    followers = db.execute(
-        'SELECT * FROM followers WHERE following_id = ?',
-        (user_row['ugs_id'],)
-    ).fetchall()
+    followers_count = len(Follower.query.filter_by(following_id=user_row.ugs_id).all())
 
     response = {
         '@context': 'https://www.w3.org/ns/activitystreams',
         'id': f"{base_url}/user/{username}/followers",
         'type': 'OrderedCollection',
-        'totalItems': len(followers),
+        'totalItems': followers_count,
         'first': f"{base_url}/user/{username}/followers?page=1"
     }
 

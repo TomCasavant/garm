@@ -1,0 +1,7 @@
+<div class="screenshot_feed">
+    {% for screenshot in screenshots %}
+      {% with screenshot=screenshot, activity=activity_map[screenshot.steam_id] %}
+        {% include 'partials/screenshot_card.html' %}
+      {% endwith %}
+    {% endfor %}
+</div>

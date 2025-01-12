@@ -1,106 +1,61 @@
-"""
-An AP Note object with an attachment that represents a screenshot.
-"""
-import uuid
-from typing import Tuple
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+from ugs.models.db import db
 
-from ugs.activitypub.models.activity import Note, AudienceType
-from datetime import datetime
-import os
-from slugify import slugify
-
-base_url = os.getenv('BASE_URL')
-
-class ScreenshotNote(Note):
-    """
-    Represents a basic screenshot object.
-    """
-
-    @classmethod
-    def from_screenshot_row(cls, screenshot_row: dict, actor_id: str) -> Tuple[str, "ScreenshotNote"]:
-        """
-        Create a basic Screenshot instance from a database row.
-        This should be overridden by subclasses for specific implementations.
-        """
-        raise NotImplementedError("Subclasses must implement from_screenshot_row")
-
-    @classmethod
-    def format_published_date(cls, unix_timestamp: int) -> str:
-        """
-        Convert a Unix timestamp to ActivityPub-compliant format.
-        """
-        return datetime.fromtimestamp(unix_timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    # generates/stores guid using uuid.uuid4()
-    @classmethod
-    def generate_guid(cls) -> str:
-        """
-        Generate a GUID for the screenshot.
-        """
-        return str(uuid.uuid4())
-
-    # Creates a formatted id path /activities/uuid
-    @classmethod
-    def generate_id(cls, guid: str) -> str:
-        """
-        Generate an ID for the screenshot.
-        """
-        return base_url + f"/activities/{guid}"
-
-
-class SteamScreenshot(ScreenshotNote):
-    """
-    Represents a Steam-specific screenshot note AP object.
-    """
-
-    @classmethod
-    def from_screenshot_row(cls, screenshot_row: dict, actor_id: str) -> Tuple[str, "ScreenshotNote"]:
-        """
-        Use this method to create a ScreenshotNote instance from the database row.
-        """
-        guid = cls.generate_guid()
-        _id = cls.generate_id(guid)
-        published = cls.format_published_date(screenshot_row['time_created'])
-        sanitized_game_name = slugify(screenshot_row['app_name'], separator='', lowercase=False)
-
-        screenshot_note = Note.model_validate({
-            'id': _id,
-            'type': 'Note',
-            'summary': None,
-            'inReplyTo': None,
-            'published': published,
-            'attributedTo': base_url + f"/user/{actor_id}",
-            'to': [AudienceType.Public],
-            'cc': base_url + f"/user/{actor_id}/followers",
-            'sensitive': False,
-            'content': screenshot_row['app_name'],
-            'contentMap': {'en': ""},
-            'attachment': [{
-                'type': 'Document',
-                'mediaType': 'image/jpeg',
-                'url': screenshot_row['image_url'],
-                'name': f"Screenshot of {screenshot_row['app_name']}"
-            }],
-            'url': _id,
-            'actor': base_url + f"/user/{actor_id}",
-            'tag': [ {
-                'type': 'Hashtag',
-                'href': f"{base_url}/tags/{sanitized_game_name}",
-                'name': f"#{screenshot_row['app_name']}"
-            },
-            {
-                'type': 'Hashtag',
-                'href': f"{base_url}/tags/gaming",
-                'name': "#gaming"
-            },
-            {
-                'type': 'Hashtag',
-                'href': f"{base_url}/tags/{sanitized_game_name}",
-                'name': f"#{sanitized_game_name}"
-            }],
-        })
-
-        return guid, screenshot_note
-
-
-
+class Screenshot(db.Model):
+    steam_id = db.Column(db.String, primary_key=True)
+    ugs_user = db.Column(db.String)
+    creator = db.Column(db.String)
+    creator_appid = db.Column(db.String)
+    consumer_appid = db.Column(db.String)
+    consumer_shortcutid = db.Column(db.String)
+    filename = db.Column(db.String)
+    file_size = db.Column(db.String)
+    preview_file_size = db.Column(db.String)
+    file_url = db.Column(db.String)
+    preview_url = db.Column(db.String)
+    url = db.Column(db.String)
+    hcontent_file = db.Column(db.String)
+    hcontent_preview = db.Column(db.String)
+    title = db.Column(db.String)
+    short_description = db.Column(db.String)
+    time_created = db.Column(db.String)
+    time_updated = db.Column(db.String)
+    visibility = db.Column(db.String)
+    flags = db.Column(db.String)
+    workshop_file = db.Column(db.String)
+    workshop_accepted = db.Column(db.String)
+    show_subscribe_all = db.Column(db.String)
+    num_comments_developer = db.Column(db.String)
+    num_comments_public = db.Column(db.String)
+    banned = db.Column(db.String)
+    ban_reason = db.Column(db.String)
+    banner = db.Column(db.String)
+    can_be_deleted = db.Column(db.String)
+    app_name = db.Column(db.String)
+    file_type = db.Column(db.String)
+    can_subscribe = db.Column(db.String)
+    subscriptions = db.Column(db.String)
+    favorited = db.Column(db.String)
+    followers = db.Column(db.String)
+    lifetime_subscriptions = db.Column(db.String)
+    lifetime_favorited = db.Column(db.String)
+    lifetime_followers = db.Column(db.String)
+    lifetime_playtime = db.Column(db.String)
+    lifetime_playtime_sessions = db.Column(db.String)
+    views = db.Column(db.String)
+    image_width = db.Column(db.String)
+    image_height = db.Column(db.String)
+    image_url = db.Column(db.String)
+    num_children = db.Column(db.String)
+    num_reports = db.Column(db.String)
+    score = db.Column(db.String)
+    votes_up = db.Column(db.String)
+    votes_down = db.Column(db.String)
+    language = db.Column(db.String)
+    maybe_inappropriate_sex = db.Column(db.String)
+    maybe_inappropriate_violence = db.Column(db.String)
+    revision_change_number = db.Column(db.String)
+    revision = db.Column(db.String)
+    ban_text_check_result = db.Column(db.String)
+    raw_activity = db.Column(db.String)

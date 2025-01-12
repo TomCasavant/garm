@@ -1,9 +1,11 @@
 import os
 
 from flask import Blueprint, request, jsonify, make_response
+from flask.cli import load_dotenv
 
-from ugs.db import get_db
-
+from ugs.models.actor import Actor
+from ugs.models.db import db
+from dotenv import load_dotenv
 bp = Blueprint('webfinger', __name__, url_prefix='/.well-known/webfinger')
 
 @bp.route('', methods=['GET'])
@@ -19,10 +21,8 @@ def webfinger():
     if not resource.startswith('acct:'):
         return jsonify({'error': 'Invalid resource format'}), 400
 
-    #print(resource[5:].split('@'))
-    #username, domain = resource[5:].split('@')
-
-    domain = os.getenv('BASE_URL').replace('https://', '')
+    print(load_dotenv())
+    domain = os.getenv('BASE_URL').replace('https://', '').strip('/')
     if resource[5:].count('@') == 2:
         username = resource[5:].split('@')[1]
     else:
@@ -30,38 +30,20 @@ def webfinger():
 
     print(f"Searching for {username} in domain {domain}")
 
-    #domain = domain.strip()
-
-    db = get_db()
-    # DROP TABLE IF EXISTS actor;
-    # CREATE TABLE actor (
-    #     ugs_id TEXT PRIMARY KEY,
-    #     profile_image TEXT,
-    #     profile_url TEXT,
-    #     steam_id TEXT,
-    #     created_at TEXT,
-    #     steam_name TEXT,
-    #     public_key TEXT,
-    #     private_key TEXT
-    # );
-    #obj = db.execute(
-    #    f'SELECT * FROM actor WHERE steam_name = ?', (username,)).fetchone()
     # Username could be steam_name or ugs_id
-    obj = db.execute(
-        f'SELECT * FROM actor WHERE steam_name = ? OR ugs_id = ?', (username, username)).fetchone()
-
+    obj = Actor.query.filter_by(steam_name=username).first()
     if obj is None:
         return jsonify({'error': 'User not found'}), 404
 
-    base_url = os.getenv('BASE_URL')
+    base_url = os.getenv('BASE_URL').strip('/')
 
     response = {
         'subject': f"acct:{username}@{domain}",
-        'aliases': [f"{base_url}/user/{obj['ugs_id']}"],
+        'aliases': [f"{base_url}/user/{obj.ugs_id}"],
         'links': [ {
             'rel': 'self',
             'type': 'application/activity+json',
-            'href': f"{base_url}/user/{obj['ugs_id']}"
+            'href': f"{base_url}/user/{obj.ugs_id}"
         }]
     }
     response = jsonify(response)

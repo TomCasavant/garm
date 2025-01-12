@@ -1,0 +1,9 @@
+<div class="screenshot-card">
+    <div class="container">
+        <h2>{{ screenshot.app_name }}</h2>
+        <a href="{{ url_for('activities.activity', activity_id=activity.guid) }}">
+            {{ request.host_url + url_for('activities.activity', activity_id=activity.guid)[1:] }}
+        </a>
+    </div>
+    <img src="{{ screenshot.image_url }}" alt="{{ screenshot.app_name }}"><br>
+</div>
