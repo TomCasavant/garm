@@ -7,7 +7,9 @@ bp = Blueprint('base', __name__, url_prefix='/')
 
 @bp.route('/', methods=['GET'])
 def base():
-    screenshots = Screenshot.query.order_by(Screenshot.time_created.desc()).limit(10).all()
+    page = request.args.get('page', default=1, type=int)
+    offset = page * 10 - 10
+    screenshots = Screenshot.query.order_by(Screenshot.time_created.desc()).limit(10).offset(offset).all()
     activities = Activity.query.filter(
         Activity.screenshot_id.in_([s.steam_id for s in screenshots]),
         Activity.activity_type == 'Note'
