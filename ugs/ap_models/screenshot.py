@@ -14,6 +14,8 @@ from ugs.models.screenshot import Screenshot
 base_url = os.getenv('BASE_URL')
 base_url = base_url.strip('/')
 
+STEAM_STORE_URL = "https://store.steampowered.com/app/{steam_id}"
+
 class ScreenshotNote(Note):
     """
     Represents a basic screenshot object.
@@ -76,7 +78,7 @@ class SteamScreenshot(ScreenshotNote):
             'to': [AudienceType.Public],
             'cc': base_url + f"/user/{actor_id}/followers",
             'sensitive': False,
-            'content': screenshot_row['app_name'],
+            'content': f"{screenshot_row['app_name']}<br><br><a href='{STEAM_STORE_URL.format(steam_id=screenshot_row['consumer_appid'])}'>{screenshot_row['app_name']} Store Page</a>",
             'contentMap': {'en': ""},
             'attachment': [{
                 'type': 'Document',

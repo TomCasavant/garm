@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  {% with screenshots=screenshots, activity_map=activity_map%}
+    {% include 'partials/screenshot_feed.html' %}
+  {% endwith %}
+{% endblock %}

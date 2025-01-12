@@ -18,7 +18,7 @@ base_url = os.getenv('BASE_URL')
 base_url = base_url.strip('/')
 
 @bp.route('/<path:activity_id>', methods=['GET', 'POST'])
-def get_activity(activity_id):
+def activity(activity_id):
     print(f"Getting activity {activity_id}")
 
     # if the url contains the STEAM_FILEPATH, then extract the id and check if it exists in the database
