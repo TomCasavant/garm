@@ -58,13 +58,15 @@ def check_for_new_screenshots():
     screenshot_db = Screenshot.query.filter_by(steam_id=screenshot_id).first()
     actor = Actor.query.filter_by(steam_id=os.getenv('STEAM_ID')).first()
     if screenshot_db is not None:
+        print("Newest screenshot is already in the database")
         return
 
     # Otherwise, loop through the screenshots until we find one that is in the database
     for screenshot in screenshots:
-        screenshot_id = screenshot.publishedfileid
+        screenshot_id = screenshot['publishedfileid']
         screenshot_search = Screenshot.query.filter_by(steam_id=screenshot_id).first()
         if screenshot_search is not None:
+            print("Found screenshot in database")
             break
 
         # Add the screenshot to the database

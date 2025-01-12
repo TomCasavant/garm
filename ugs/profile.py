@@ -5,9 +5,10 @@ from flask import Blueprint, jsonify, request, redirect
 from pydantic import BaseModel
 
 from ugs.models.db import db
-from ugs.models.actor import Actor
+from ugs.models.actor import Actor as UGSActor
 from .activitypub.models.activity import Actor, PublicKey
 from .models.follower import Follower
+from .models.screenshot import Screenshot
 
 bp = Blueprint('user', __name__, url_prefix='/')
 
@@ -80,11 +81,13 @@ class Profile(Actor):
 # if POST then show json of user
 @bp.route('/user/<username>', methods=['GET', 'POST'])
 def user(username):
-    user_row = Actor.query.filter_by(ugs_id=username).first()
+    print(db.session)
+    # get first screenshot in table
+    user_row = UGSActor.query.filter_by(ugs_id=username).first()
 
     if user_row is None:
         # Check if matches /users/${ugs_id}
-        user_row = Actor.query.filter_by(steam_name=username).first()
+        user_row = UGSActor.query.filter_by(steam_name=username).first()
 
         # redirect if found
         if user_row is not None:
@@ -98,7 +101,7 @@ def user(username):
 
     if not any(accept in request.headers.get('Accept', '') for accept in ['application/activity+json', 'application/ld+json']):
         print(request.headers.get('Accept'))
-        return redirect(user_row['profile_url'])
+        return redirect(user_row.profile_url)
 
     response = jsonify(model_dump)
     response.headers['Content-Type'] = 'application/activity+json'

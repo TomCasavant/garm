@@ -14,6 +14,9 @@ from ugs.models.foreign_activity import ForeignActivity
 from ugs.models.foreign_actor import ForeignActor
 from ugs.models.follower import Follower
 from ugs.models.screenshot import Screenshot
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def celery_init_app(app: Flask) -> Celery:
     class FlaskTask(Task):
@@ -55,7 +58,7 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'ugs.sqlite'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
-
+    celery_init_app(app)
     db.init_app(app)
     from ugs.models.db import init_app
     init_app(app)

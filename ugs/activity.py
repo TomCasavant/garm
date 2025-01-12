@@ -9,11 +9,13 @@ from ugs.activitypub.signature import sign_and_send
 from ugs.models.actor import Actor
 from ugs.models.db import db
 from ugs.models.follower import Follower
+from ugs.models.foreign_actor import ForeignActor
 from ugs.steam_platform import STEAM_FILEPATH
 from ugs.models.activity import Activity
 
 bp = Blueprint('activities', __name__, url_prefix='/activities')
 base_url = os.getenv('BASE_URL')
+base_url = base_url.strip('/')
 
 @bp.route('/<path:activity_id>', methods=['GET', 'POST'])
 def get_activity(activity_id):
@@ -72,12 +74,12 @@ def get_activity(activity_id):
 def send_activity(activity):
 
     # Check if the activity already has a create activity
-    create_activity = Activity.query.filter_by(guid=f"{activity['guid']}-create").first()
+    create_activity = Activity.query.filter_by(guid=f"{activity.guid}-create").first()
 
     print(f"Activity Exists: {create_activity}")
 
     # Sends the activity to the followers of the actor
-    actor_obj = Actor.query.filter_by(ugs_id=activity['actor_guid']).first()
+    actor_obj = Actor.query.filter_by(ugs_id=activity.actor_guid).first()
 
     print(f"Actor: {actor_obj}")
 
@@ -88,7 +90,7 @@ def send_activity(activity):
     for follower in followers:
         # Retrieve follower from the foreign_actor table
         ap_id = follower.follower_id
-        foreign_actor_obj = Actor.query.filter_by(ap_id=ap_id).first()
+        foreign_actor_obj = ForeignActor.query.filter_by(ap_id=ap_id).first()
         inbox = foreign_actor_obj.inbox
 
         if create_activity is not None:
@@ -116,7 +118,7 @@ def send_activity(activity):
         activity_json = activity.activity_json
         activity_json = eval(activity_json)
 
-        create_activity = {
+        new_create_activity = {
             '@context': 'https://www.w3.org/ns/activitystreams',
             'type': 'Create',
             'actor': f"{base_url}/user/{actor_obj.ugs_id}",
@@ -133,14 +135,14 @@ def send_activity(activity):
             actor_guid=actor_obj.ugs_id,
             activity_type='Create',
             object_guid=activity_id,
-            activity_json=str(create_activity),
+            activity_json=str(new_create_activity),
             screenshot_id=activity.screenshot_id
         )
         db.session.add(activity)
-        db.commit()
+        db.session.commit()
 
         sign_and_send(
-            create_activity,
+            new_create_activity,
             actor_obj.private_key,
             inbox,
             f"{base_url}/user/{actor_obj.steam_name}#main-key"

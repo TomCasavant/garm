@@ -12,6 +12,7 @@ from slugify import slugify
 from ugs.models.screenshot import Screenshot
 
 base_url = os.getenv('BASE_URL')
+base_url = base_url.strip('/')
 
 class ScreenshotNote(Note):
     """
@@ -56,14 +57,14 @@ class SteamScreenshot(ScreenshotNote):
     """
 
     @classmethod
-    def from_screenshot_row(cls, screenshot_row: Screenshot, actor_id: str) -> Tuple[str, "ScreenshotNote"]:
+    def from_screenshot_row(cls, screenshot_row: dict, actor_id: str) -> Tuple[str, "ScreenshotNote"]:
         """
         Use this method to create a ScreenshotNote instance from the database row.
         """
         guid = cls.generate_guid()
         _id = cls.generate_id(guid)
-        published = cls.format_published_date(screenshot_row.time_created)
-        sanitized_game_name = slugify(screenshot_row.app_name, separator='', lowercase=False)
+        published = cls.format_published_date(screenshot_row['time_created'])
+        sanitized_game_name = slugify(screenshot_row['app_name'], separator='', lowercase=False)
 
         screenshot_note = Note.model_validate({
             'id': _id,
@@ -75,20 +76,20 @@ class SteamScreenshot(ScreenshotNote):
             'to': [AudienceType.Public],
             'cc': base_url + f"/user/{actor_id}/followers",
             'sensitive': False,
-            'content': screenshot_row.app_name,
+            'content': screenshot_row['app_name'],
             'contentMap': {'en': ""},
             'attachment': [{
                 'type': 'Document',
                 'mediaType': 'image/jpeg',
-                'url': screenshot_row.image_url,
-                'name': f"Screenshot of {screenshot_row.app_name}"
+                'url': screenshot_row['image_url'],
+                'name': f"Screenshot of {screenshot_row['app_name']}"
             }],
             'url': _id,
             'actor': base_url + f"/user/{actor_id}",
             'tag': [ {
                 'type': 'Hashtag',
                 'href': f"{base_url}/tags/{sanitized_game_name}",
-                'name': f"#{screenshot_row.app_name}"
+                'name': f"#{screenshot_row['app_name']}"
             },
             {
                 'type': 'Hashtag',

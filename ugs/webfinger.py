@@ -1,10 +1,11 @@
 import os
 
 from flask import Blueprint, request, jsonify, make_response
+from flask.cli import load_dotenv
 
 from ugs.models.actor import Actor
 from ugs.models.db import db
-
+from dotenv import load_dotenv
 bp = Blueprint('webfinger', __name__, url_prefix='/.well-known/webfinger')
 
 @bp.route('', methods=['GET'])
@@ -20,7 +21,8 @@ def webfinger():
     if not resource.startswith('acct:'):
         return jsonify({'error': 'Invalid resource format'}), 400
 
-    domain = os.getenv('BASE_URL').replace('https://', '')
+    print(load_dotenv())
+    domain = os.getenv('BASE_URL').replace('https://', '').strip('/')
     if resource[5:].count('@') == 2:
         username = resource[5:].split('@')[1]
     else:
@@ -33,7 +35,7 @@ def webfinger():
     if obj is None:
         return jsonify({'error': 'User not found'}), 404
 
-    base_url = os.getenv('BASE_URL')
+    base_url = os.getenv('BASE_URL').strip('/')
 
     response = {
         'subject': f"acct:{username}@{domain}",

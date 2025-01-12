@@ -71,7 +71,9 @@ class SteamPlatform(Platform):
         print("Finished loading all screenshots.")
 
     def add_screenshot(self, screenshot, user_id):
+        print("Adding screenshot to the database")
         guid, note = SteamScreenshot.from_screenshot_row(screenshot, user_id)
+        print(f"Note creatd with GUID: {guid}")
         note_dump = note.model_dump(mode="json", by_alias=True)
         note_str = str(note_dump)
 
@@ -135,20 +137,18 @@ class SteamPlatform(Platform):
         )
         self.db.session.add(new_screenshot)
         self.db.session.commit()
+        print(f"Processed screenshot GUID: {guid}")
 
 
         actor_guid = user_id
         activity_type = 'Note'
         object_guid = guid
         activity_json = note_str
-        #self.db.execute(
-        #    'INSERT INTO activity (guid, actor_guid, activity_type, object_guid, activity_json, screenshot_id) VALUES (?, ?, ?, ?, ?, ?)',
-        #    (guid, actor_guid, activity_type, object_guid, activity_json, screenshot.get('publishedfileid'))
-        #)
+        print("Adding activity to the database")
         new_activity = Activity(
-            guid=f"{guid}-create",
+            guid=f"{guid}",
             actor_guid=actor_guid,
-            activity_type='Create',
+            activity_type=activity_type,
             object_guid=object_guid,
             activity_json=str(activity_json),
             screenshot_id=screenshot.get('publishedfileid')
