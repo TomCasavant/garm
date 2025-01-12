@@ -166,6 +166,11 @@ class SteamPlatform(Platform):
                         continue
                     if existing_activity_json[key] != new_activity_json[key]:
                         print(f"Activity for screenshot ID: {existing_screenshot.steam_id} has been updated")
+                        # copy old url and id into note_str
+                        note['url'] = existing_activity_json['url']
+                        note['id'] = existing_activity_json['id']
+                        note_dump = note.model_dump(mode="json", by_alias=True)
+                        note_str = str(note_dump)
                         existing_activity.activity_json = note_str
                         existing_screenshot.raw_activity = note_str
                         self.db.session.commit()
