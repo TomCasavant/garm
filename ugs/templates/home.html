@@ -2,11 +2,9 @@
 
 {% block content %}
   <div class='screenshot_feed'>
-  	<div id='screenshot_feed'>
-  		{% with screenshots=screenshots, activity_map=activity_map%}
+  		{% with screenshots=screenshots, activity_map=activity_map, user=user %}
     		{% include 'partials/screenshot_feed.html' %}
-  		{% endwith %}
-  	</div>
+		{% endwith %}
   <div id='loading-container'><button> Load More </button></div>
   </div>
 {% endblock %}

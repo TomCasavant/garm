@@ -1,8 +1,10 @@
 <!doctype html>
 <title>{% block title %}{% endblock %} - UGS</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% block styles %}{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='status-card.css') }}">
 <script src="{{ url_for('static', filename='infinite-scroll.js') }}" defer></script>
-<header>
+<header class="main-header">
       <nav>
           <ul>
               <li><a href="/">Home</a></li>
