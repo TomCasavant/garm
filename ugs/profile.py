@@ -73,7 +73,9 @@ class Profile(Actor):
             ],
             'published': user_row.created_at,
             'alsoKnownAs': [user_row.profile_url],
-            'attributionDomains': [user_row.profile_url]
+            'attributionDomains': [user_row.profile_url],
+            'followers': f"{base_url}/user/{user_row.ugs_id}/followers",
+            'following': f"{base_url}/user/{user_row.ugs_id}/following"
         })
         return actor
 
@@ -109,9 +111,16 @@ def user(username):
 
 @bp.route('/user/<username>/followers', methods=['GET'])
 def followers(username):
-    user_row = Actor.query.filter_by(steam_name=username).first()
+    user_row = UGSActor.query.filter_by(ugs_id=username).first()
 
     if user_row is None:
+        # Check if matches /users/${ugs_id}
+        user_row = UGSActor.query.filter_by(steam_name=username).first()
+
+        # redirect if found
+        if user_row is not None:
+            return redirect(f"/user/{user_row.ugs_id}/followers")
+
         return jsonify({'error': 'User not found'}), 404
 
     base_url = os.getenv('BASE_URL')

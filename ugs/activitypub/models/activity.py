@@ -136,4 +136,6 @@ class Actor(BaseActor):
     endpoints: Optional[dict] = None
     icon: Optional[dict] = None
     image: Optional[dict] = None
+    followers: str = None
+    following: str = None
 

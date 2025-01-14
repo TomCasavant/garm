@@ -72,13 +72,13 @@ def activity(activity_id):
 
 
 def send_activity(activity):
-
-    # Check if the activity already has a create activity
-    create_activity = Activity.query.filter_by(guid=f"{activity.guid}-create").first()
+    # Check if the activity already has a corresponding "Create" activity
+    create_activity_guid = f"{activity.guid}-create"
+    create_activity = Activity.query.filter_by(guid=create_activity_guid).first()
 
     print(f"Activity Exists: {create_activity}")
 
-    # Sends the activity to the followers of the actor
+    # Retrieve the actor associated with the activity
     actor_obj = Actor.query.filter_by(ugs_id=activity.actor_guid).first()
 
     print(f"Actor: {actor_obj}")
@@ -86,64 +86,73 @@ def send_activity(activity):
     if actor_obj is None:
         return None
 
+    # Get all followers of the actor
     followers = Follower.query.filter_by(following_id=actor_obj.ugs_id).all()
+    print(f"Sending to all {len(followers)} followers")
+
     for follower in followers:
-        # Retrieve follower from the foreign_actor table
+        # Retrieve the follower from the ForeignActor table
         ap_id = follower.follower_id
         foreign_actor_obj = ForeignActor.query.filter_by(ap_id=ap_id).first()
+        if not foreign_actor_obj:
+            print(f"Foreign actor not found for follower ID: {ap_id}")
+            continue
+
         inbox = foreign_actor_obj.inbox
 
-        if create_activity is not None:
-            # sign and send that activity
-            create_activity_json = create_activity.activity_json
-            create_activity_dict = eval(create_activity_json)
+        if create_activity:
+            print("Create activity already exists, sending that one")
+            # Sign and send the existing "Create" activity
+            create_activity_dict = eval(create_activity.activity_json)
             sign_and_send(
                 create_activity_dict,
-                actor_obj['private_key'],
+                actor_obj.private_key,
                 inbox,
                 f"{base_url}/user/{actor_obj.steam_name}#main-key"
             )
-            continue
+        else:
+            # Wrap the activity in a new "Create" activity
+            create_url = f"{base_url}/activities/{activity.guid}/create"
+            print(f"New create URL: {create_url}")
 
-        # wrap activity in CREATE activity
-        activity_id = activity.guid
-        create_url = f"{base_url}/activities/{activity_id}/create"
-        # Current datetime in ISO 8601 format
-        activity_datetime = datetime.now().isoformat()
+            # Get the current datetime in ISO 8601 format
+            activity_datetime = datetime.now().isoformat()
 
-        # Fetch the corresponding activity from the database
-        activity = Activity.query.filter_by(guid=activity_id).first()
+            # Parse the original activity's JSON
+            activity_json = eval(activity.activity_json)
 
-        # Get the json of the activity
-        activity_json = activity.activity_json
-        activity_json = eval(activity_json)
+            new_create_activity = {
+                '@context': 'https://www.w3.org/ns/activitystreams',
+                'type': 'Create',
+                'actor': f"{base_url}/user/{actor_obj.ugs_id}",
+                'object': activity_json,
+                'to': [AudienceType.Public.value],
+                'cc': [f"{base_url}/user/{actor_obj.ugs_id}/followers"],
+                'id': create_url,
+                'published': activity_datetime,
+            }
 
-        new_create_activity = {
-            '@context': 'https://www.w3.org/ns/activitystreams',
-            'type': 'Create',
-            'actor': f"{base_url}/user/{actor_obj.ugs_id}",
-            'object': activity_json,
-            'to': [AudienceType.Public.value],
-            'cc': [foreign_actor_obj.ap_id],
-            'id': create_url,
-            'published': activity_datetime
-        }
+            # Save the new "Create" activity in the database
+            new_activity = Activity(
+                guid=create_activity_guid,
+                actor_guid=actor_obj.ugs_id,
+                activity_type='Create',
+                object_guid=activity.guid,
+                activity_json=str(new_create_activity),
+                screenshot_id=activity.screenshot_id,
+            )
+            db.session.add(new_activity)
+            db.session.commit()
 
-        # Add the activity to the database
-        activity = Activity(
-            guid=f"{activity_id}-create",
-            actor_guid=actor_obj.ugs_id,
-            activity_type='Create',
-            object_guid=activity_id,
-            activity_json=str(new_create_activity),
-            screenshot_id=activity.screenshot_id
-        )
-        db.session.add(activity)
-        db.session.commit()
+            # Update the create_activity variable for subsequent loops
+            create_activity = new_activity
 
-        sign_and_send(
-            new_create_activity,
-            actor_obj.private_key,
-            inbox,
-            f"{base_url}/user/{actor_obj.steam_name}#main-key"
-        )
+            print("Sending new create activity")
+
+            # Sign and send the new "Create" activity
+            sign_and_send(
+                new_create_activity,
+                actor_obj.private_key,
+                inbox,
+                f"{base_url}/user/{actor_obj.steam_name}#main-key"
+            )
