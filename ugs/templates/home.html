@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  {% with screenshots=screenshots, activity_map=activity_map%}
-    {% include 'partials/screenshot_feed.html' %}
-  {% endwith %}
+  <div class='screenshot_feed'>
+  	<div id='screenshot_feed'>
+  		{% with screenshots=screenshots, activity_map=activity_map%}
+    		{% include 'partials/screenshot_feed.html' %}
+  		{% endwith %}
+  	</div>
+  <div id='loading-container'><button> Load More </button></div>
+  </div>
 {% endblock %}

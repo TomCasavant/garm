@@ -11,6 +11,7 @@ from ugs.models.actor import Actor
 from ugs.models.follower import Follower
 from ugs.models.foreign_activity import ForeignActivity
 from ugs.models.foreign_actor import ForeignActor
+import uuid
 
 bp = Blueprint('inbox', __name__, url_prefix='/user/<username>/inbox')
 
@@ -184,7 +185,7 @@ def inbox(username):
                 # Unknown undo activity
                 # Add to table with type Undo
                 new_activity = ForeignActivity(
-                    activity_id=None,
+                    activity_id=str(uuid.uuid4()),
                     activity_type='Undo',
                     foreign_actor_id=None,
                     subject_actor_guid=None,
@@ -198,7 +199,7 @@ def inbox(username):
             print("External Actor:", external_actor)
             print("AP Object:", ap_object)
             new_activity = ForeignActivity(
-                activity_id=None,
+                activity_id=str(uuid.uuid4()),
                 activity_type=activity_type,
                 foreign_actor_id=None,
                 subject_actor_guid=None,

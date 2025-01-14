@@ -22,13 +22,14 @@ def get_screenshots():
 
 @celery_app.task
 def post_screenshot():
+    print("Posting screenshot")
     # Gets all the screenshots
     # Finds most recent that doesn't have a CREATE Note in the db
     # Sends out a Create Note to all followers
     #screenshots = db.execute(
     #    'SELECT * FROM screenshot ORDER BY time_created ASC'
     #).fetchall()
-    screenshots = Screenshot.query.order_by(Screenshot.time_created.asc()).limit(5).all()
+    screenshots = Screenshot.query.order_by(Screenshot.time_created.asc()).all()
 
     unposted_screenshot = None
     for screenshot in screenshots:
