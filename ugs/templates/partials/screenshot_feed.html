@@ -1,6 +1,7 @@
-
-    {% for screenshot in screenshots %}
-      {% with screenshot=screenshot, activity=activity_map[screenshot.steam_id] %}
+<section id="screenshot_feed" class="timeline">
+{% for screenshot in screenshots %}
+    {% with screenshot=screenshot, activity=activity_map[screenshot.steam_id], user=user %}
         {% include 'partials/screenshot_card.html' %}
-      {% endwith %}
-    {% endfor %}
+    {% endwith %}
+{% endfor %}
+</section>

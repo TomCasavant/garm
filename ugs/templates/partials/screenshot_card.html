@@ -1,9 +1,29 @@
-<div class="screenshot-card">
-    <div class="container">
-        <h2>{{ screenshot.app_name }}</h2>
-        <a href="{{ url_for('activities.activity', activity_id=activity.guid) }}">
-            {{ request.host_url + url_for('activities.activity', activity_id=activity.guid)[1:] }}
+<article class="post">
+    <div class="post-header">
+        <div class="profile">
+            <img
+                src="{{ user.profile_image }}"
+                alt="Profile picture of {{ user.name }}"
+                class="profile-picture"
+              />
+            <div class="profile-details">
+                <h2 class="username">{{ user.name }}</h2>
+                <p class="user-handle"><a href="{{user.profile_url}}"> @{{ user.steam_name }} </a><p>
+            </div>
+        </div>
+    </div>
+    <div class="post-content">
+        <p class="status-text">
+           Shared a screenshot from <strong>{{ screenshot.app_name }}</strong>.
+        </p>
+        <a href="{{ url_for('activities.activity', activity_id=activity.guid) }}" class="activity-link">
+            View Activity
         </a>
     </div>
-    <img src="{{ screenshot.image_url }}" alt="{{ screenshot.app_name }}"><br>
-</div>
+    <figure class="screenshot">
+        <img src="{{ screenshot.image_url }}" alt="Screenshot from {{ screenshot.app_name }}"
+        alt="{{ screenshot.app_name }}"
+        />
+        <figcaption> Screenshot from {{ screenshot.app_name }} </figcaption>
+    </figure>
+</article>

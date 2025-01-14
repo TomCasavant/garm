@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, make_response, render_template
 
 from ugs.models.activity import Activity
+from ugs.models.actor import Actor
 from ugs.models.db import db
 from ugs.models.screenshot import Screenshot
 bp = Blueprint('base', __name__, url_prefix='/')
@@ -14,11 +15,12 @@ def base():
         Activity.screenshot_id.in_([s.steam_id for s in screenshots]),
         Activity.activity_type == 'Note'
     ).all()
+    user = Actor.query.first()
     activity_map = {s.steam_id: None for s in screenshots}
     for activity in activities:
         activity_map[activity.screenshot_id] = activity
 
-    return render_template('home.html', screenshots=screenshots, activity_map=activity_map)
+    return render_template('home.html', screenshots=screenshots, activity_map=activity_map, user=user)
 
 
 @bp.route('/posts', methods=['GET'])
@@ -30,8 +32,12 @@ def posts():
         Activity.screenshot_id.in_([s.steam_id for s in screenshots]),
         Activity.activity_type == 'Note'
     ).all()
+
+    # Get first/only user in the database
+    user = Actor.query.first()
+
     activity_map = {s.steam_id: None for s in screenshots}
     for activity in activities:
         activity_map[activity.screenshot_id] = activity
 
-    return render_template('partials/screenshot_feed.html', screenshots=screenshots, activity_map=activity_map)
+    return render_template('partials/screenshot_feed.html', screenshots=screenshots, activity_map=activity_map, user=user)
